@@ -109,7 +109,7 @@ public class Mascota {
     @Override
     public String toString() {
         if (this.vivo == false) {
-            return "Nombre: " + this.nombre + " ha muerto.";
+            return this.nombre + " ha muerto.";
         }
         return "Nombre: " + this.nombre + "\n" +
                "Estado: " + this.estado + "\n" +
