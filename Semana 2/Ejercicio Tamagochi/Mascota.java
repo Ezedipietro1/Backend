@@ -143,11 +143,11 @@ public class Mascota {
         }
         this.setEnergia((int)(this.energia + this.energia * 0.05));
         this.setHumor(this.humor + 1);
+        System.out.println(this.nombre + " ha bebido y gano " + "\n" +
+               "+" + (this.energia * 0.05) + " energia" + "\n" +
+               "+ 1 humor" + "\n");
         this.contIngesta++;
         this.contActividad = 0;
-        if (this.contIngesta < 5) {
-            System.out.println(this.getNombre() + " ha bebido. Su energía es ahora " + this.getEnergia());
-        }
         this.controlIngesta();
         return true;
     }
@@ -160,6 +160,9 @@ public class Mascota {
         }
         this.setEnergia((int)(this.energia - this.energia * 0.35));
         this.setHumor(this.humor - 2);
+        System.out.println(this.nombre + " ha corrido " + "\n" +
+               "-" + (this.energia * 0.35) + " energia" + "\n" +
+               "- 2 humor" + "\n");
         this.contActividad++;
         this.contIngesta = 0;
         this.controlActividad();
@@ -173,6 +176,9 @@ public class Mascota {
         }
         this.setEnergia((int)(this.energia - this.energia * 0.15));
         this.setHumor(this.humor - 2);
+        System.out.println(this.nombre + " ha corrido " + "\n" +
+               "-" + (this.energia * 0.15) + " energia" + "\n" +
+               "- 2 humor" + "\n");
         this.contActividad++;
         this.contIngesta = 0;
         this.controlActividad();
@@ -187,6 +193,9 @@ public class Mascota {
         }
         this.setEnergia((int)(this.energia + this.energia * 0.25));
         this.setHumor(this.humor + 2);
+        System.out.println(this.nombre + " se durmio " + "\n" +
+               "+" + (this.energia * 0.25) + " energia" + "\n" +
+               "+ 2 humor" + "\n");
         this.setEstado("Dormido");
         return true;
     }
@@ -196,6 +205,8 @@ public class Mascota {
             System.out.println("La mascota está muerta y no puede despertar.");
             return false;
         }
+        System.out.println(this.nombre + " se desperto " + "\n" +
+               "- 1 humor" + "\n");
         this.setEstado("Despierto");
         this.setHumor(this.humor - 1);
         return true;
