@@ -4,7 +4,7 @@ import java.io.*;
 public class Ejercicio6 {
     public static void main(String[] args) {
         try {
-            File archivo = new File("numeros.txt");
+        File archivo = new File("numeros.txt");
         Scanner scanner = new Scanner(archivo);
         int pares = 0;
         int impares = 0;

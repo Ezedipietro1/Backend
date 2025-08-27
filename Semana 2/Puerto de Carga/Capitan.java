@@ -5,27 +5,27 @@ public class Capitan {
     private int antiguedad;
 
     public Capitan(int id, String nombre, String apellido, int antiguedad){
-        this.id = id
-        this.nombre = nombre
-        this.apellido = apellido
-        this.antiguedad = antiguedad
+        this.id = id;
+        this.nombre = nombre;
+        this.apellido = apellido;
+        this.antiguedad = antiguedad;
     }
 
     //Getters 
     public int getId(){
-        return this.id
+        return this.id;
     }
 
     public String getNombre(){
-        return this.nombre
+        return this.nombre;
     }
 
     public String getApellidos(){
-        return this.apellido
+        return this.apellido;
     }
 
     public int getAntiguedad(){
-        return this.antiguedad
+        return this.antiguedad;
     }
 
     //Setters

@@ -11,7 +11,7 @@ public class BarcoTest {
         double carga = 10;
         
         // Act -> Ejecutar el metodo
-        Barcos barco = new Barco(cap, matricula, darsena, carga);
+        Barco barco = new Barco(cap, matricula, darsena, carga, capitan);
 
         // Assert -> Comprobar que mi metodo se ejecuto con los resultados esperados
         assertNotNull(barco);

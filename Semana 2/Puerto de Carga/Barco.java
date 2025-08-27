@@ -1,4 +1,4 @@
-public class Barcos {
+public class Barco {
     private String matricula;
     private int nroMuelle;
     private int capacidad;
@@ -6,7 +6,7 @@ public class Barcos {
     private Capitan capitan;
 
     // Constructor
-    public Barcos(String matricula, int nroMuelle, int capacidad, int costoPorHora, Capitan capitan) {
+    public Barco(String matricula, int nroMuelle, int capacidad, int costoPorHora, Capitan capitan) {
         this.matricula = matricula;
         this.nroMuelle = nroMuelle;
         this.capacidad = capacidad;
@@ -16,44 +16,44 @@ public class Barcos {
 
     // Getters
     public String getMatricula(){
-        return this.matricula
+        return this.matricula;
     }
 
     public int getNroMuelle(){
-        return this.nroMuelle
+        return this.nroMuelle;
     }
 
     public int getCapacidad(){
-        return this.capacidad
+        return this.capacidad;
     }
 
     public int getcostoPorHora(){
-        return this.costoPorHora
+        return this.costoPorHora;
     }
 
     public Object getCapitan(){
-        return this.capitan
+        return this.capitan;
     }
 
     //Setters
     public void setMatricula(String matricula){
-        this.matricula = matricula
+        this.matricula = matricula;
     }
 
     public void setNroMuelle(int nroMuelle){
-        this.nroMuelle = nroMuelle
+        this.nroMuelle = nroMuelle;
     }
 
     public void setCapacidad(int capacidad){
-        this.capacidad = capacidad
+        this.capacidad = capacidad;
     }
 
     public void setCostoPorHora(int costoPorHora){
-        this.costoPorHora = costoPorHora
+        this.costoPorHora = costoPorHora;
     }
 
     public void setCapitan(Capitan capitan){
-        this.capitan = capitan
+        this.capitan = capitan;
     }
     
 }
