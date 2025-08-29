@@ -4,6 +4,7 @@ import java.io.*;
 public class App {
     public static void main(String[] args) {
         Cliente[] arrayClientes = new Cliente[200];
+        float[] arrayPuntos = new float[200];
         int contadorClientes = -1;
 
         try {
@@ -41,7 +42,9 @@ public class App {
             int totalPosteos = calculos.totalPosteos();
             System.out.println("La cantidad total de posteos es de: " + totalPosteos);
 
-            int puntuacionPrimero = calculos.calcularPuntuacion()
+            arrayPuntos = calculos.calcularPuntuacionTodos();
+
+            System.out.println("Puntuacion del cliente 79: " + calculos.calcularPuntuacion(arrayClientes[78]));
 
         } catch (FileNotFoundException e) {
             System.out.println("El archivo no existe");
@@ -52,6 +55,7 @@ public class App {
         System.out.println("\n Lista de Clientes:");
         for (int i = 0; i < 10; i++) {
             System.out.println(arrayClientes[i] + "\n");
+            System.out.println("Puntuacion del cliente: " + arrayPuntos[i] + "\n");
         }
     }
 }
