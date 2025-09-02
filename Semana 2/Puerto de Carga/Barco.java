@@ -2,11 +2,11 @@ public class Barco {
     private String matricula;
     private int nroMuelle;
     private int capacidad;
-    private int costoPorHora;
+    private float costoPorHora;
     private Capitan capitan;
 
     // Constructor
-    public Barco(String matricula, int nroMuelle, int capacidad, int costoPorHora, Capitan capitan) {
+    public Barco(String matricula, int nroMuelle, int capacidad, float costoPorHora, Capitan capitan) {
         this.matricula = matricula;
         this.nroMuelle = nroMuelle;
         this.capacidad = capacidad;
@@ -27,7 +27,7 @@ public class Barco {
         return this.capacidad;
     }
 
-    public int getcostoPorHora(){
+    public float getCostoPorHora(){
         return this.costoPorHora;
     }
 
@@ -48,7 +48,7 @@ public class Barco {
         this.capacidad = capacidad;
     }
 
-    public void setCostoPorHora(int costoPorHora){
+    public void setCostoPorHora(float costoPorHora){
         this.costoPorHora = costoPorHora;
     }
 
