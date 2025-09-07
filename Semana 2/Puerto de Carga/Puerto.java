@@ -42,17 +42,13 @@ public class Puerto {
             System.out.println("El archivo no existe");
         }
 
-        // int cantidadCarga = calcularCarga(arrayBarcos);
-    }
-
-    public static int calcularCarga(ArraySimple arrayBarcos) {
-        int totalCarga = 0;
-        Object barco;
+        float totalCarga = 0;
         for (int i = 0; i < arrayBarcos.size(); i++) {
-            barco = arrayBarcos.get(i);
-            System.out.println(barco);
-            // totalCarga += barco.getCostoPorHora() * 15;
+
+            totalCarga += arrayBarcos.get(i).calcularCarga();
+
+            
+
         }
-        return totalCarga;
     }
 }

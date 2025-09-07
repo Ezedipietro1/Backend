@@ -47,4 +47,8 @@ public class Maritimo extends Viaje {
                 ", pesoTransportado=" + pesoTransportado +
                 '}';
     }
+
+    public double calcularCosto() {
+        return Math.floor(this.costoPorKilo * this.pesoTransportado);
+    }
 }

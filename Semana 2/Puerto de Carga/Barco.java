@@ -56,4 +56,8 @@ public class Barco {
         this.capitan = capitan;
     }
     
+    // Metodos
+    public float calcularCarga() {
+        return this.costoPorHora * 15;
+    }
 }

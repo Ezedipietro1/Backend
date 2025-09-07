@@ -13,6 +13,7 @@ public class App {
         try {
             File archivo = new File("viajes.csv");
             Scanner scanner = new Scanner(archivo);
+            Cliente cliente = null;
 
             scanner.nextLine();
             while (scanner.hasNextLine()) {
@@ -43,12 +44,17 @@ public class App {
                     String nombreEmpresa = datos[11];
                     String cuit = datos[12];
 
-                    Cliente cliente = new Cliente(nombreEmpresa, cuit);
-                    clientes.put(cuit, cliente);
+                    if (clientes.containsKey(cuit)) {
+                        cliente = clientes.get(cuit);
+                        
+                    } else {
+                        cliente = new Cliente(nombreEmpresa, cuit);
+                        clientes.put(cuit, cliente);
+                    }
+                    
 
                     if (tipo == 2) {
                         Terrestre viaje = new Terrestre(codigo, nroReserva, precio, tipo, cliente, provinciasVisitadas, cantidadPasajeros);
-                        System.out.println(viaje);
                         listaViajes.add(viaje);
                     } else if (tipo == 1) {
                         Aereo viaje = new Aereo(codigo, nroReserva, precio, tipo, cliente, millasAcumuladas, codAerolinea);
@@ -65,8 +71,42 @@ public class App {
         }
 
         int cantidadClientes = clientes.size();
-        System.out.println("La cantidad de clientes es de: " + cantidadClientes);
+        System.out.println("La cantidad de clientes es de: " + cantidadClientes + "\n");
 
+        int cantidadAereos = 0;
+        int cantidadMillas = 0;
+        int cantidadTerrestres = 0;
+        int cantidadPasajeros = 0;
+        int cantidadMaritimos = 0;
+        int cantidadContenedores = 0;
+        double costoAcumuladoTotal = 0;
+        
+        for (Viaje viaje : listaViajes) {
+            if (viaje instanceof Aereo) {
+                cantidadAereos++;
+                cantidadMillas += ((Aereo) viaje).getMillasAcumuladas();
+            } else if (viaje instanceof Terrestre) {
+                cantidadTerrestres++;
+                cantidadPasajeros += ((Terrestre) viaje).getCantidadPasajeros();
+            } else {
+                cantidadMaritimos++;
+                cantidadContenedores += ((Maritimo) viaje).getCantidadContenedores();
 
+                if (((Maritimo) viaje).getCantidadContenedores() >= 5) {
+                    costoAcumuladoTotal += ((Maritimo) viaje).calcularCosto(); 
+                }
+            }
+        }
+
+        System.out.println("Informacion de Viajes Aereos:");
+        System.out.println("La cantidad de viajes aereos es de: " + cantidadAereos);
+        System.out.println("La cantidad de millas acumuladas en viajes aereos es de: " + cantidadMillas + "\n");
+        System.out.println("Informacion de Viajes Terrestres:");
+        System.out.println("La cantidad de viajes terrestres es de: " + cantidadTerrestres);
+        System.out.println("La cantidad de pasajeros en viajes terrestres es de: " + cantidadPasajeros + "\n");
+        System.out.println("Informacion de Viajes Maritimos:");
+        System.out.println("La cantidad de viajes maritimos es de: " + cantidadMaritimos);
+        System.out.println("La cantidad de contenedores en viajes maritimos es de: " + cantidadContenedores);
+        System.out.println("El costo acumulado de los viajes maritimos con mas de 5 contenedores es de: " + costoAcumuladoTotal);
     }
 }
