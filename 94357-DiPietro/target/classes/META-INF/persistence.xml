@@ -23,9 +23,8 @@
             <property name="hibernate.show_sql" value="true" />
             <property name="hibernate.format_sql" value="true" />
 
-            <property name="jakarta.persistence.schema-generation.database.action" value="create"/>
-            <property name="jakarta.persistence.schema-generation.create-source" value="script"/>
-            <property name="jakarta.persistence.schema-generation.create-script-source" value="sql/ddl_board_games.sql"/>
+            <!-- Schema generation disabled because DB is initialized manually at application startup -->
+            <property name="jakarta.persistence.schema-generation.database.action" value="none"/>
         </properties>
     </persistence-unit>
 </persistence>

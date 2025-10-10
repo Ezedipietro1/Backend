@@ -28,7 +28,7 @@ public class BoardGame {
         sequenceName = "SEQ_BOARD_GAME_ID",
         allocationSize = 1
     )
-    @Column(name = "ID_GAME")
+    @Column(name = "ID_GAME", nullable = false)
     private Integer id;
 
     @Column(name = "NAME", nullable = false, length = 200)
@@ -40,7 +40,7 @@ public class BoardGame {
     @Column(name = "MIN_AGE")
     private Integer minAge;
 
-    @Column(name = "AVERAGE_RATING", precision = 3, scale = 2)
+    @Column(name = "AVERAGE_RATING")
     private Double averageRating;
 
     @Column(name = "USERS_RATING")

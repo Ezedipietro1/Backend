@@ -70,13 +70,13 @@ public class BoardGameService implements IService<BoardGame, Integer> {
         BoardGame.setMinPlayers(Integer.parseInt(valores[5]));
         BoardGame.setMaxPlayers(Integer.parseInt(valores[6]));
 
-        var deisgner = designerService.getOrCreateByName(valores[7]);
+        var deisgner = designerService.getOrCreateByName(valores[9]);
         BoardGame.setDesigner(deisgner);
 
-        var publisher = publisherService.getOrCreateByName(valores[8]);
+        var publisher = publisherService.getOrCreateByName(valores[7]);
         BoardGame.setPublisher(publisher);
 
-        var category = categoryService.getOrCreateByName(valores[9]);
+        var category = categoryService.getOrCreateByName(valores[8]);
         BoardGame.setCategory(category);
 
         return BoardGame;
