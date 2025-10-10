@@ -2,7 +2,7 @@ package ar.edu.utnfrc.backend.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDate;
+import java.time.LocalDate;  
 
 @Entity
 @Table(name = "empleado")
@@ -14,12 +14,16 @@ public class Empleado {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     
+    @Column(nullable = false, length = 100)
     private String nombre;
+
+    @Column(nullable = false)
     private int edad;
 
     @Column(name = "fecha_ingreso", nullable = false)
     private LocalDate fechaIngreso;
 
+    @Column(nullable = false)
     private double salario;
 
     @Column(name = "empleado_fijo", nullable = false)

@@ -1,0 +1,7 @@
+{
+    "vscode-pets.theme": "forest",
+    "vscode-pets.petSize": "small",
+    "vscode-pets.throwBallWithMouse": true,
+    "vscode-pets.disableEffects": true,
+    "java.configuration.updateBuildConfiguration": "interactive"
+}

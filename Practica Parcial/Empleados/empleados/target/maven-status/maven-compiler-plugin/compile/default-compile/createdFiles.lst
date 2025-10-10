@@ -1,1 +1,13 @@
+ar\edu\utnfrc\backend\services\PuestoService.class
+ar\edu\utnfrc\backend\repositories\EmpleadoRepository.class
+ar\edu\utnfrc\backend\repositories\PuestoRepository.class
+ar\edu\utnfrc\backend\services\interfaces\IService.class
+ar\edu\utnfrc\backend\entities\Puesto.class
+ar\edu\utnfrc\backend\entities\Departamento.class
+ar\edu\utnfrc\backend\repositories\Repository.class
+ar\edu\utnfrc\backend\services\EmpleadoService.class
 ar\edu\utnfrc\backend\App.class
+ar\edu\utnfrc\backend\entities\Empleado.class
+ar\edu\utnfrc\backend\services\DepartamentoService.class
+ar\edu\utnfrc\backend\repositories\DepartamentoRepository.class
+ar\edu\utnfrc\backend\repositories\context\DbContext.class
