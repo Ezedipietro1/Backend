@@ -51,7 +51,10 @@ public class Menu<T> implements IMenu<T> {
                 sc.next(); // consumir la entrada no válida
             }
 
-            return sc.nextInt();
+            int opcion = sc.nextInt();
+            sc.nextLine(); // consumir el salto de línea pendiente
+
+            return opcion;
         } else {
             throw new IllegalArgumentException("El contexto no es AppContext");
         }

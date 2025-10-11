@@ -5,7 +5,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Scanner;
 
+import utnfc.isi.back.domain.BoardGame;
 import utnfc.isi.back.services.BoardGameService;
 
 public class Actions {
@@ -114,17 +116,59 @@ public class Actions {
             });
     }
 
-        public void contarCantidadJuegosConRestriccionEdad(AppContext context) {
-            var service = context.getService(BoardGameService.class);
-            var boardgames = service.getAll();
+    public void contarCantidadJuegosConRestriccionEdad(AppContext context) {
+        var service = context.getService(BoardGameService.class);
+        var boardgames = service.getAll();
 
-            long count = boardgames.stream()
-                    .filter(bg -> bg.getMinAge() != null && bg.getMinAge() > 0)
-                    .count();
+        long count = boardgames.stream()
+                .filter(bg -> bg.getMinAge() != null && bg.getMinAge() > 0)
+                .count();
 
-            System.out.printf("Hay %d juegos con restricción de edad (minAge > 0).%n", count);
+        System.out.printf("Hay %d juegos con restricción de edad (minAge > 0).%n", count);
+    }
+
+    // OPCION 5 - Juegos que se puedan jugar con estas edades
+    public void listarJuegosPorEdades(AppContext context) {
+        var service = context.getService(BoardGameService.class);
+        var boardgames = service.getAll();
+
+        if (boardgames.isEmpty()) {
+            System.out.println("No hay juegos registrados en la base de datos.");
+            return;
         }
 
-    
+        // Usamos el Scanner del contexto
+        Scanner sc = context.get("scanner", Scanner.class);
+
+        System.out.print("Ingrese edades de los jugadores separadas por coma (ej: 8,10,12): ");
+        String input = sc.nextLine();
+        String[] tokens = input.split(",");
+        int[] edades = new int[tokens.length];
+
+        try {
+            for (int i = 0; i < tokens.length; i++) {
+                edades[i] = Integer.parseInt(tokens[i].trim());
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Alguna edad ingresada no es un número válido. Intente de nuevo.");
+            return;
+        }
+
+        System.out.println("Juegos adecuados para esas edades:");
+        boolean hayCompatibles = false;
+
+        for (BoardGame juego : boardgames) {
+            if (juego.isSuitableForAges(edades)) {
+                System.out.printf(" - %s (Edad mínima: %s)%n",
+                        juego.getName(),
+                        juego.getMinAge() != null ? juego.getMinAge() : "sin restricción");
+                hayCompatibles = true;
+            }
+        }
+
+        if (!hayCompatibles) {
+            System.out.println("No se encontraron juegos compatibles con esas edades.");
+        }
+    }
 
 }

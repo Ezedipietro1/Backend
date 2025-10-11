@@ -59,12 +59,13 @@ public class App {
             actions::contarCantidadJuegosConRestriccionEdad
         ));
 
-        /*
-        menu.addOption(5, new ItemMenu<>(
-            "Promedio Salarios por puesto", 
-            actions::promedioSalariosPorPuesto
+        
+        menu.addOption(6, new ItemMenu<>(
+            "Listar Juegos por Rango de Edades", 
+            actions::listarJuegosPorEdades
         ));
 
+        /*
         // AGREGADASS
         menu.addOption(6, new ItemMenu<>(
             "Listar empleados desde DB", 
