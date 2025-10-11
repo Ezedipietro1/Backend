@@ -47,17 +47,19 @@ public class App {
             actions::listarBoardGame
         ));
 
-        /*
+        
         menu.addOption(3, new ItemMenu<>(
-            "Listar Empleados con su Salario Final", 
-            actions::listarEmpleadosSalarioFinal
+            "Listar Juegos por Desarrollador", 
+            actions::listarJuegosPorDesarrollador
         ));
 
+        
         menu.addOption(4, new ItemMenu<>(
-            "Contar empleados por departamento", 
-            actions::contarEmpleadosPorDepartamento
+            "Contar juegos con restricción de edad", 
+            actions::contarCantidadJuegosConRestriccionEdad
         ));
 
+        /*
         menu.addOption(5, new ItemMenu<>(
             "Promedio Salarios por puesto", 
             actions::promedioSalariosPorPuesto

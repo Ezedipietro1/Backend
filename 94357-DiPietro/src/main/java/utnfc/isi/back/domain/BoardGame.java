@@ -66,4 +66,23 @@ public class BoardGame {
     @JoinColumn(name = "ID_CATEGORY", nullable = false,
                 foreignKey = @ForeignKey(name = "FK_BG_CATEGORY"))
     private Category category;
+
+
+    public boolean supportsPlayerCount(int players) {
+        if (players <= 0) return false; 
+        if (minPlayers == null && maxPlayers == null) return true;
+        if (minPlayers == null) return players <= maxPlayers;
+        if (maxPlayers == null) return players >= minPlayers;
+        return players >= minPlayers && players <= maxPlayers;
+    }
+
+    public boolean isSuitableForAges(int[] ages) { 
+        if (ages == null || ages.length == 0 || minAge == null) return true;
+        for (int age : ages) {
+            if (age < this.minAge) {
+                return false;
+            }
+        }
+        return true;
+     }
 }

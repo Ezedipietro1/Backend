@@ -65,13 +65,20 @@ public class BoardGameService implements IService<BoardGame, Integer> {
         BoardGame.setName(valores[0]);
         BoardGame.setYearPublished(Integer.parseInt(valores[1]));
         BoardGame.setMinAge(Integer.parseInt(valores[2]));
-        BoardGame.setAverageRating(Double.parseDouble(valores[3]));
+
+        String ratingStr = valores[3].trim(); // quitar espacios
+        if (ratingStr.isEmpty()) {
+            BoardGame.setAverageRating(null); // Asignar null si está vacío
+        } else {
+            BoardGame.setAverageRating(Double.parseDouble(ratingStr)); 
+        }
+
         BoardGame.setUsersRating(Integer.parseInt(valores[4]));
         BoardGame.setMinPlayers(Integer.parseInt(valores[5]));
         BoardGame.setMaxPlayers(Integer.parseInt(valores[6]));
 
-        var deisgner = designerService.getOrCreateByName(valores[9]);
-        BoardGame.setDesigner(deisgner);
+        var designer = designerService.getOrCreateByName(valores[9]);
+        BoardGame.setDesigner(designer);
 
         var publisher = publisherService.getOrCreateByName(valores[7]);
         BoardGame.setPublisher(publisher);

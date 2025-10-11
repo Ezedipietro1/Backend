@@ -89,4 +89,42 @@ public class Actions {
         }
     }
 
+    public void listarJuegosPorDesarrollador(AppContext context) {
+        var service = context.getService(BoardGameService.class);
+
+        var boardgames = service.getAll();
+
+        if (boardgames.isEmpty()) {
+            System.out.println("⚠ No hay BoardGames registradas en la base de datos.");
+            return;
+        }
+
+        // Agrupar por nombre del diseñador (manejar nulls)
+        var grouped = boardgames.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                    bg -> bg.getDesigner() != null ? bg.getDesigner().getNombre() : "Desconocido"
+                ));
+
+        // Ordenar por nombre del diseñador
+        grouped.keySet().stream()
+            .sorted(String.CASE_INSENSITIVE_ORDER)
+            .forEach(designerName -> {
+                System.out.println("\n--- " + designerName + " ---");
+                grouped.get(designerName).forEach(bg -> System.out.println(" - " + bg.getName()));
+            });
+    }
+
+        public void contarCantidadJuegosConRestriccionEdad(AppContext context) {
+            var service = context.getService(BoardGameService.class);
+            var boardgames = service.getAll();
+
+            long count = boardgames.stream()
+                    .filter(bg -> bg.getMinAge() != null && bg.getMinAge() > 0)
+                    .count();
+
+            System.out.printf("Hay %d juegos con restricción de edad (minAge > 0).%n", count);
+        }
+
+    
+
 }
