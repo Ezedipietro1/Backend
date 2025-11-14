@@ -3,6 +3,8 @@ package com.SolicitudTraslado.repo;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.SolicitudTraslado.domain.Ruta;
@@ -11,7 +13,8 @@ import com.SolicitudTraslado.domain.Ruta;
 public interface RutaRepo extends JpaRepository<Ruta, Long> {
     List<Ruta> findByAsignada(Boolean asignada);
 
-    List<Ruta> findBySolicitud(Long solicitudId);
+    @Query("SELECT r FROM Ruta r WHERE r.solicitud.id = :solicitudId")
+    List<Ruta> findBySolicitudId(@Param("solicitudId") Long solicitudId);
 
     List<Ruta> findByOrigenIdAndDestinoId(Long origenId, Long destinoId);
 }

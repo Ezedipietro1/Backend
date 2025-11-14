@@ -10,5 +10,5 @@ import java.util.List;
 @Repository
 public interface TramoRepo extends JpaRepository<Tramos, Long> {
     List<Tramos> findByCamionDominio(String dominio);
-    List<Tramos> findByTipo(TipoTramo tipoTramo);
+    List<Tramos> findByTipoTramo(TipoTramo tipoTramo);
 }
