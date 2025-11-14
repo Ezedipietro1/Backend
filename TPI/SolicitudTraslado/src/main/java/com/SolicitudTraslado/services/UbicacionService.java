@@ -1,23 +1,27 @@
 package com.SolicitudTraslado.services;
 
-import com.SolicitudTraslado.domain.Ciudad;
-import com.SolicitudTraslado.domain.Ubicacion;
-import com.SolicitudTraslado.repo.UbicacionRepo;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.SolicitudTraslado.domain.Ciudad;
+import com.SolicitudTraslado.domain.Ubicacion;
+import com.SolicitudTraslado.repo.CiudadRepo;
+import com.SolicitudTraslado.repo.UbicacionRepo;
 
 @Service
 public class UbicacionService {
     private final UbicacionRepo ubicacionRepo;
+    private final CiudadRepo ciudadRepo;
 
-    public UbicacionService(UbicacionRepo ubicacionRepo) {
+    public UbicacionService(UbicacionRepo ubicacionRepo, CiudadRepo ciudadRepo) {
         this.ubicacionRepo = ubicacionRepo;
+        this.ciudadRepo = ciudadRepo;
     }
 
     @Transactional(readOnly = true)
@@ -29,12 +33,30 @@ public class UbicacionService {
     @Transactional
     public Ubicacion crearUbicacion(Ubicacion ubicacion) {
         validarUbicacion(ubicacion);
+
+        // Si viene solo el ID de la ciudad, cargar la ciudad completa desde la BD
+        if (ubicacion.getCiudad() != null && ubicacion.getCiudad().getId() != null) {
+            Ciudad ciudadCompleta = ciudadRepo.findById(ubicacion.getCiudad().getId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Ciudad no encontrada con ID: " + ubicacion.getCiudad().getId()));
+            ubicacion.setCiudad(ciudadCompleta);
+        }
+
         return ubicacionRepo.save(ubicacion);
     }
 
     @Transactional
     public Ubicacion actualizarUbicacion(Ubicacion ubicacionActualizada) {
         validarUbicacion(ubicacionActualizada);
+
+        // Si viene solo el ID de la ciudad, cargar la ciudad completa desde la BD
+        if (ubicacionActualizada.getCiudad() != null && ubicacionActualizada.getCiudad().getId() != null) {
+            Ciudad ciudadCompleta = ciudadRepo.findById(ubicacionActualizada.getCiudad().getId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Ciudad no encontrada con ID: " + ubicacionActualizada.getCiudad().getId()));
+            ubicacionActualizada.setCiudad(ciudadCompleta);
+        }
+
         return ubicacionRepo.save(ubicacionActualizada);
     }
 
@@ -46,6 +68,11 @@ public class UbicacionService {
             ubicacionMap.put(ub.getId(), ub);
         }
         return ubicacionMap;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Ubicacion> listarUbicacionesComoLista() {
+        return ubicacionRepo.findAll();
     }
 
     @Transactional(readOnly = true)

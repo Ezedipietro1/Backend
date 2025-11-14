@@ -35,8 +35,27 @@ public class CamionService {
             throw new IllegalArgumentException("Ya existe un camión con el mismo dominio: " + camion.getDominio());
         }
 
-        // validamos que el transportista exista
-        validarYObtenerTransportista(camion.getTransportista().getDni());
+        // obtenemos y validamos que el transportista exista --> tambien obtenemos su
+        // dni para pasarlo directamente por postman
+        String dniTransportista = null;
+        if (camion.getTransportista() != null && camion.getTransportista().getDni() != null) {
+            dniTransportista = camion.getTransportista().getDni();
+        }
+
+        if (dniTransportista == null || dniTransportista.trim().isEmpty()) {
+            throw new IllegalArgumentException("El DNI del transportista es obligatorio");
+        }
+
+        // Validamos que el transportista exista y lo asignamos al camión
+        Transportista transportista = transportistaRepo.findById(dniTransportista)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No se encontró un transportista con el DNI: "));
+        camion.setTransportista(transportista);
+
+        // Seteamos el estado por defecto si no viene
+        if (camion.getEstado() == null) {
+            camion.setEstado(true);
+        }
 
         return camionRepo.save(camion);
 
@@ -118,15 +137,6 @@ public class CamionService {
         if (camion.getTransportista() == null || camion.getTransportista().getDni() == null) {
             throw new IllegalArgumentException("El transportista es obligatorio");
         }
-    }
-
-    private Transportista validarYObtenerTransportista(String dni) {
-        if (dni == null || dni.trim().isEmpty()) {
-            throw new IllegalArgumentException("El DNI del transportista es obligatorio");
-        }
-
-        return transportistaRepo.findById(dni)
-                .orElseThrow(() -> new IllegalArgumentException("Transportista no encontrado con DNI: " + dni));
     }
 
 }
