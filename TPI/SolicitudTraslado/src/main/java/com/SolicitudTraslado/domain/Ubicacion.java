@@ -2,6 +2,7 @@ package com.SolicitudTraslado.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Data
 @AllArgsConstructor
@@ -9,6 +10,7 @@ import lombok.*;
 @Entity
 @Builder
 @Table(name = "ubicaciones")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Ubicacion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

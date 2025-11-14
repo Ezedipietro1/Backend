@@ -36,12 +36,12 @@ public class DepositoController {
         return ResponseEntity.ok(depositoService.obtenerDepositoPorId(id));
     }
 
-    @GetMapping("/por-ubicacion")
+    @GetMapping("/por_ubicacion")
     public ResponseEntity<List<Deposito>> obtenerPorUbicacion(@RequestParam("ubicacionId") Long ubicacionId) {
         return ResponseEntity.ok(depositoService.obtenerDepositosPorUbicacionId(ubicacionId));
     }
 
-    @GetMapping("/por-ciudad")
+    @GetMapping("/por_ciudad")
     public ResponseEntity<List<Deposito>> obtenerPorCiudad(@RequestParam("ciudadId") Long ciudadId) {
         return ResponseEntity.ok(depositoService.obtenerDepositosPorCiudadId(ciudadId));
     }
