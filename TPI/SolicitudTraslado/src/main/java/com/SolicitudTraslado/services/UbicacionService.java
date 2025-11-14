@@ -71,11 +71,6 @@ public class UbicacionService {
     }
 
     @Transactional(readOnly = true)
-    public List<Ubicacion> listarUbicacionesComoLista() {
-        return ubicacionRepo.findAll();
-    }
-
-    @Transactional(readOnly = true)
     public List<Ubicacion> obtenerUbicacionesPorCiudadId(Long ciudadId) {
         return ubicacionRepo.findByCiudadId(ciudadId);
     }
