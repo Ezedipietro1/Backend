@@ -10,5 +10,4 @@ import com.SolicitudTraslado.domain.Ciudad;
 @Repository
 public interface CiudadRepo extends JpaRepository<Ciudad, Long> {
     Optional<Ciudad> findByNombreIgnoreCase(String nombre);
-
 }

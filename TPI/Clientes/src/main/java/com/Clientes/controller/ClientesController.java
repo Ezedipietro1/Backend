@@ -5,7 +5,7 @@ import com.Clientes.services.ClienteService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/clientes")
@@ -41,8 +41,8 @@ public class ClientesController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Cliente>> obtenerTodosLosClientes() {
-        List<Cliente> clientes = clienteService.listarTodos();
+    public ResponseEntity<Map<Long, Cliente>> obtenerTodosLosClientes() {
+        Map<Long, Cliente> clientes = clienteService.listarTodos();
         return ResponseEntity.ok(clientes);
     }
 

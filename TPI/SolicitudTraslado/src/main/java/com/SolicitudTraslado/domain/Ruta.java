@@ -38,5 +38,7 @@ public class Ruta {
     @OneToMany(mappedBy = "ruta", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<Tramos> tramos = new LinkedHashSet<>();
-    
+
+    @Column(nullable = false)
+    private Boolean asignada;
 }
