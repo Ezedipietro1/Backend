@@ -6,5 +6,4 @@ import com.Clientes.domain.Cliente;
 
 @Repository
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
-    
 }
