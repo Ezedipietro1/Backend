@@ -60,7 +60,7 @@ public class App {
         ));
 
         
-        menu.addOption(6, new ItemMenu<>(
+        menu.addOption(5, new ItemMenu<>(
             "Listar Juegos por Rango de Edades", 
             actions::listarJuegosPorEdades
         ));
