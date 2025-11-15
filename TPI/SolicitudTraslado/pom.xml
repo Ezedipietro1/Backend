@@ -74,6 +74,20 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- Resource server para validar tokens JWT de Keycloak -->
+    	<dependency>
+        	<groupId>org.springframework.boot</groupId>
+        	<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+    	</dependency>
+
+		 <!-- Keycloak Admin Client (opcional, para gestión programática) -->
+    	<dependency>
+        	<groupId>org.keycloak</groupId>
+        	<artifactId>keycloak-admin-client</artifactId>
+        	<version>23.0.0</version>
+    		</dependency>
+
 	</dependencies>
 
 	<build>
