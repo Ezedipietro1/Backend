@@ -3,13 +3,7 @@ package com.SolicitudTraslado.controller;
 import java.util.HashMap;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.SolicitudTraslado.domain.Tarifa;
 import com.SolicitudTraslado.services.TarifaService;
@@ -46,5 +40,18 @@ public class TarifaController {
         tarifa.setId(id);
         Tarifa actualizada = tarifaService.actualizarTarifa(tarifa);
         return ResponseEntity.ok(actualizada);
+    }
+
+    // Endpoints para la tarifa única (actual)
+    @GetMapping("/current")
+    public ResponseEntity<Tarifa> getTarifaActual() {
+        Tarifa t = tarifaService.obtenerTarifa();
+        return ResponseEntity.ok(t);
+    }
+
+    @PutMapping("/current")
+    public ResponseEntity<Tarifa> updateTarifaActual(@RequestBody Tarifa tarifa) {
+        Tarifa actualizado = tarifaService.actualizarTarifa(tarifa);
+        return ResponseEntity.ok(actualizado);
     }
 }

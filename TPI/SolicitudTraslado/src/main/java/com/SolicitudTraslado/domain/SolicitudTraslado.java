@@ -3,6 +3,7 @@ package com.SolicitudTraslado.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import com.SolicitudTraslado.domain.enums.EstadoSolicitud;
+import jakarta.persistence.Transient;
 
 @Data
 @AllArgsConstructor
@@ -18,6 +19,14 @@ public class SolicitudTraslado {
     // Cliente es administrado por otro microservicio; almacenamos solo su id
     @Column(name = "cliente_id", nullable = false)
     private Long clienteId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ubicacion_origen_id", nullable = false)
+    private Ubicacion ubicacionOrigen;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ubicacion_destino_id", nullable = false)
+    private Ubicacion ubicacionDestino;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ruta_id", nullable = false)
@@ -37,13 +46,16 @@ public class SolicitudTraslado {
     @Column(name = "tiempo_estimado", nullable = false)
     private Double tiempoEstimado;
 
-    @Column(name = "costo_final")
+    @Column(name = "costo_final", nullable = true)
     private Double costoFinal;
 
-    @Column(name = "tiempo_real")
+    @Column(name = "tiempo_real", nullable = true)
     private Double tiempoReal;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false, length = 20)
     private EstadoSolicitud estado;
+
+    @Transient
+    private Cliente cliente;
 }

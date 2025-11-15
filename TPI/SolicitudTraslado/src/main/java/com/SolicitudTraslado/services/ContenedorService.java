@@ -29,6 +29,10 @@ public class ContenedorService {
         }
 
         // validamos los datos del contenedor
+        // Si no viene estado, asignamos un estado por defecto para evitar constraint NOT NULL
+        if (contenedor.getEstadoContenedor() == null) {
+            contenedor.setEstadoContenedor(EstadoContenedor.EN_DEPOSITO);
+        }
         validarContenedor(contenedor);
 
         return contenedorRepo.save(contenedor);

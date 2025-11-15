@@ -13,8 +13,8 @@ import com.SolicitudTraslado.domain.Ruta;
 public interface RutaRepo extends JpaRepository<Ruta, Long> {
     List<Ruta> findByAsignada(Boolean asignada);
 
-    @Query("SELECT r FROM Ruta r WHERE r.solicitud.id = :solicitudId")
-    List<Ruta> findBySolicitudId(@Param("solicitudId") Long solicitudId);
+    @Query("SELECT r FROM Ruta r WHERE r.solicitud.numero = :solicitudNumero")
+    List<Ruta> findBySolicitudNumero(@Param("solicitudNumero") Long solicitudNumero);
 
     List<Ruta> findByOrigenIdAndDestinoId(Long origenId, Long destinoId);
 }
