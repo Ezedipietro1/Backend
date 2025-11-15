@@ -82,12 +82,12 @@ public class ClienteService {
             }
         }
 
-        // Email: si viene, comprobar formato básico
+        // Email: si viene, comprobar formato básico (más permissivo)
         if (c.getEmail() != null && !c.getEmail().trim().isEmpty()) {
             String email = c.getEmail().trim();
-            // patrón simple: algo@algo.algo
-            if (!Pattern.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", email)) {
-                throw new IllegalArgumentException("Email en formato inválido");
+            // patrón permissivo: no espacios, un @ y al menos un punto en el dominio
+            if (!Pattern.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", email)) {
+                throw new IllegalArgumentException("Email en formato inválido: " + email);
             }
         }
     }
