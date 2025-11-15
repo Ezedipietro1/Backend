@@ -13,3 +13,11 @@ services:
     volumes:
       - ./Clientes/data:/data
     restart: unless-stopped
+    networks:
+      - tpi-networks
+
+
+
+networks:
+  tpi-networks:
+    driver: bridge
