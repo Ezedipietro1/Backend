@@ -29,7 +29,7 @@ public class SolicitudTraslado {
     private Ubicacion ubicacionDestino;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ruta_id", nullable = false)
+    @JoinColumn(name = "ruta_id", nullable = true)
     private Ruta ruta;
 
     @OneToOne(fetch = FetchType.LAZY)

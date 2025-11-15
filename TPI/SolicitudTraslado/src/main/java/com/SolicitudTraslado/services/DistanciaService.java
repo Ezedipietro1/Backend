@@ -61,7 +61,7 @@ public class DistanciaService {
             method = "haversine";
         }
 
-        result.put("distanceKm", distanceKm);
+        result.put("distanceKm", Math.abs(distanceKm));
         result.put("unit", "km");
         result.put("method", method);
         return result;

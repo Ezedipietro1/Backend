@@ -29,7 +29,7 @@ public class ContenedorController {
         return ResponseEntity.ok(contenedorService.obtenerContenedorPorId(id));
     }
 
-    @GetMapping("/en-deposito")
+    @GetMapping("/en_deposito")
     public ResponseEntity<List<Contenedor>> obtenerContenedoresEnDeposito() {
         return ResponseEntity.ok(contenedorService.obtenerContenedoresEnDeposito());
     }

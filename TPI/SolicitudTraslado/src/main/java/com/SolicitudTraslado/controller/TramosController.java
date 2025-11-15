@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import com.SolicitudTraslado.services.TramoService;
 import com.SolicitudTraslado.domain.Tramos;
 import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/tramos")
@@ -38,6 +39,12 @@ public class TramosController {
         tramo.setId(id);
         Tramos actualizado = tramoService.actualizarTramo(tramo);
         return ResponseEntity.ok(actualizado);
+    }
+
+    @GetMapping("/{dominio}")
+    public ResponseEntity<List<Tramos>> obtenerTramoPorDominio(@PathVariable String dominio) {
+        List<Tramos> tramo = tramoService.obtenerTramosPorCamionDominio(dominio);
+        return ResponseEntity.ok(tramo);
     }
     
 }

@@ -3,6 +3,7 @@ package com.SolicitudTraslado.services;
 import com.SolicitudTraslado.domain.Ruta;
 import com.SolicitudTraslado.repo.RutaRepo;
 import com.SolicitudTraslado.repo.UbicacionRepo;
+import com.SolicitudTraslado.services.DistanciaService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
@@ -14,14 +15,20 @@ import java.util.HashMap;
 public class RutaService {
     private final RutaRepo rutaRepo;
     private final UbicacionRepo ubicacionRepo;
+    private final DistanciaService distanciaService;
 
-    public RutaService(RutaRepo rutaRepo, UbicacionRepo ubicacionRepo) {
+    public RutaService(RutaRepo rutaRepo, UbicacionRepo ubicacionRepo, DistanciaService distanciaService) {
         this.rutaRepo = rutaRepo;
         this.ubicacionRepo = ubicacionRepo;
+        this.distanciaService = distanciaService;
     }
 
     @Transactional
     public Ruta crearRuta(Ruta ruta) {
+
+        Map<String,Object> distancia = distanciaService.calcularDistancia(ruta.getOrigen().getLatitud(), ruta.getOrigen().getLongitud(), ruta.getDestino().getLatitud(), ruta.getDestino().getLongitud());
+        ruta.setDistancia((Double) distancia.get("distanceKm"));
+        
         validarRuta(ruta);
         return rutaRepo.save(ruta);
     }
