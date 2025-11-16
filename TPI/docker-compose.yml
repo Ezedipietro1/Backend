@@ -25,11 +25,30 @@ services:
     environment:
       - SPRING_DATASOURCE_URL=jdbc:sqlite:/data/solicitudtranslado.db
       - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.sqlite.JDBC
-      - KEYCLOAK_SERVER_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=TPI-Realm
-      - KEYCLOAK_CLIENT_ID=contenedores-api
+      - KEYCLOAK_ISSUER_URI=http://host.docker.internal:8080/realms/TPI-Realm
+      - KEYCLOAK_JWK_SET_URI=http://host.docker.internal:8080/realms/TPI-Realm/protocol/openid-connect/certs
     volumes:
       - ./SolicitudTraslado/data:/data
+    restart: unless-stopped
+    networks:
+      - tpi-networks
+
+  gateway:
+    build:
+      context: ./Gateway
+      dockerfile: Dockerfile
+    container_name: gateway
+    ports:
+      - "8083:8083"
+    environment:
+      - KEYCLOAK_ISSUER_URI=http://host.docker.internal:8080/realms/TPI-Realm
+      - KEYCLOAK_JWK_SET_URI=http://host.docker.internal:8080/realms/TPI-Realm/protocol/openid-connect/certs
+      - CLIENTES_SERVICE_URL=http://clientes:8081
+      - SOLICITUDES_SERVICE_URL=http://solicitudtraslado:8082
+    depends_on:
+      - keycloak
+      - clientes
+      - solicitudtraslado
     restart: unless-stopped
     networks:
       - tpi-networks

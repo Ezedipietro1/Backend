@@ -27,8 +27,8 @@ public class CamionController {
     }
 
     @PostMapping
-    public ResponseEntity<Camion> crearCamion(@RequestBody Camion camion) {
-        Camion nuevoCamion = camionService.crearCamion(camion);
+    public ResponseEntity<Camion> crearCamion(@RequestBody Camion camion, @RequestHeader("Authorization") String authHeader) {
+        Camion nuevoCamion = camionService.crearCamion(camion, authHeader);
         return ResponseEntity.ok(nuevoCamion);
     }
 

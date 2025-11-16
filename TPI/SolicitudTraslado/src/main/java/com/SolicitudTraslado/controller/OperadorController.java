@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import com.SolicitudTraslado.domain.Camion;
 import com.SolicitudTraslado.domain.Ciudad;
@@ -183,9 +184,9 @@ public class OperadorController {
 
     @PostMapping("/camiones")
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<?> crearCamion(@RequestBody Camion camion) {
+    public ResponseEntity<?> crearCamion(@RequestBody Camion camion, @RequestHeader("Authorization") String authHeader) {
         try {
-            Camion creado = camionService.crearCamion(camion);
+            Camion creado = camionService.crearCamion(camion, authHeader);
             return ResponseEntity.status(HttpStatus.CREATED).body(creado);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
