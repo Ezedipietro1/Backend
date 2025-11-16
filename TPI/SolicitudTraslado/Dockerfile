@@ -16,8 +16,8 @@ ENTRYPOINT ["java","-jar","/app/app.jar"]
 
 # para keycloak (ajustar según tu configuración)
 ENV KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080
-ENV KEYCLOAK_REALM=contenedores-app
-ENV KEYCLOAK_CLIENT_ID=contenedores-api
-ENV KEYCLOAK_CLIENT_SECRET=your-client-secret-here
-ENV SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/contenedores-app
-ENV SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://keycloak:8080/realms/contenedores-app/protocol/openid-connect/certs
+ENV KEYCLOAK_REALM=backend-containers
+ENV KEYCLOAK_CLIENT_ID=tpi-backend-client
+ENV KEYCLOAK_CLIENT_SECRET=bfmtgdiEIuEwTufDxX1oFQz7BDdN30pP
+ENV SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/backend-containers
+ENV SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://keycloak:8080/realms/backend-containers/protocol/openid-connect/certs
