@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.SolicitudTraslado.services.DistanciaService;
 
 @RestController
-@RequestMapping("/api/distancias")
+@RequestMapping("/api/solicitudes/distancias")
 public class DistanciaController {
 
     private final DistanciaService distanciaService;

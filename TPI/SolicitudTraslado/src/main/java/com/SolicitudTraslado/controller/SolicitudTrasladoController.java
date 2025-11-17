@@ -14,7 +14,7 @@ import com.SolicitudTraslado.services.SolicitudTrasladoService;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/solicitudes")
+@RequestMapping("/api/solicitudes/solicitudTraslado")
 public class SolicitudTrasladoController {
 
     private final SolicitudTrasladoService solicitudTrasladoService;

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/osrm")
+@RequestMapping("/api/solicitudes/osrm")
 public class OsrmController {
 
     private final OsrmService osrmService;

@@ -8,7 +8,7 @@ import com.SolicitudTraslado.domain.Camion;
 import com.SolicitudTraslado.services.CamionService;
 
 @RestController
-@RequestMapping("/api/camiones")
+@RequestMapping("/api/solicitudes/camiones")
 public class CamionController {
     private final CamionService camionService;
 

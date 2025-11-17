@@ -10,7 +10,7 @@ import com.SolicitudTraslado.domain.Ubicacion;
 import com.SolicitudTraslado.services.UbicacionService;
 
 @RestController
-@RequestMapping("/api/ubicaciones")
+@RequestMapping("/api/solicitudes/ubicaciones")
 public class UbicacionController {
 
     private final UbicacionService ubicacionService;

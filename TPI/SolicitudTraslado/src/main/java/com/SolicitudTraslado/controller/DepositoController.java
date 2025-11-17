@@ -11,7 +11,7 @@ import com.SolicitudTraslado.domain.Deposito;
 import com.SolicitudTraslado.services.DepositoService;
 
 @RestController
-@RequestMapping("/api/depositos")
+@RequestMapping("/api/solicitudes/depositos")
 public class DepositoController {
 
     private final DepositoService depositoService;

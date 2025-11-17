@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/tramos")
+@RequestMapping("/api/solicitudes/tramos")
 public class TramosController {
     private final TramoService tramoService;
 

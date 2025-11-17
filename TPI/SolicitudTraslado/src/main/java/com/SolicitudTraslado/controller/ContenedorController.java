@@ -11,7 +11,7 @@ import com.SolicitudTraslado.domain.Contenedor;
 import com.SolicitudTraslado.services.ContenedorService;
 
 @RestController
-@RequestMapping("/api/contenedores")
+@RequestMapping("/api/solicitudes/contenedores")
 public class ContenedorController {
 
     private final ContenedorService contenedorService;

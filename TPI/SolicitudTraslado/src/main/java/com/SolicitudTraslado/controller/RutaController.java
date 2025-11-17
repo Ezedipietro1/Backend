@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/rutas")
+@RequestMapping("/api/solicitudes/rutas")
 public class RutaController {
     private final RutaService rutaService;
     private final SolicitudTrasladoService solicitudTrasladoService;

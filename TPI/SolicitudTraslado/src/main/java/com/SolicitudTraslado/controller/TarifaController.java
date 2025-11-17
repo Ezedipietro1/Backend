@@ -10,7 +10,7 @@ import com.SolicitudTraslado.domain.Tarifa;
 import com.SolicitudTraslado.services.TarifaService;
 
 @RestController
-@RequestMapping("/api/tarifas")
+@RequestMapping("/api/solicitudes/tarifas")
 public class TarifaController {
 
     private final TarifaService tarifaService;
