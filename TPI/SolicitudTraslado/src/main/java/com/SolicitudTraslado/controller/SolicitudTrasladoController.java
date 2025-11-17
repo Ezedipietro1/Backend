@@ -26,7 +26,7 @@ public class SolicitudTrasladoController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('OPERADOR')")
+    @PreAuthorize("hasRole('CLIENTE')")
     public ResponseEntity<SolicitudTraslado> crear(Long clienteId, String nombre, String apellido, String telefono, boolean activo, String email, Double volumen, Double peso, Long ubicacionOrigenId, Long ubicacionDestinoId) {
         SolicitudTraslado creada = solicitudTrasladoService.crearSolicitudTraslado(clienteId, nombre, apellido, telefono, activo, email, volumen, peso, ubicacionOrigenId, ubicacionDestinoId);
         return ResponseEntity.ok(creada);
@@ -56,6 +56,7 @@ public class SolicitudTrasladoController {
     }
 
     @PutMapping("/{numero}/asignar_ruta/{rutaId}")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<SolicitudTraslado> asignarRuta(@PathVariable Long numero, @PathVariable Long rutaId) {
         SolicitudTraslado solicitud = solicitudTrasladoService.obtenerSolicitudPorNumero(numero);
         Ruta ruta = rutaService.obtenerRutaPorId(rutaId);
