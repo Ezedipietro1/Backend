@@ -148,8 +148,8 @@ public class RolTransportistaController {
                     "mensaje", "Tramo iniciado exitosamente",
                     "tramoId", actualizado.getId(),
                     "fechaInicio", actualizado.getFechaInicio(),
-                    "origen", actualizado.getOrigen().getCiudad().getNombre(),
-                    "destino", actualizado.getDestino().getCiudad().getNombre()));
+                    "origen", actualizado.getOrigen().getNombre(),
+                    "destino", actualizado.getDestino().getNombre()));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -199,16 +199,15 @@ public class RolTransportistaController {
             }
 
             // Registrar fecha de fin (ahora)
-            Date fechaFin = new Date(System.currentTimeMillis());
-            Tramos actualizado = tramoService.actualizarFechaFin(id, fechaFin);
+            Tramos actualizado = tramoService.finalizarTramo(id);
 
             return ResponseEntity.ok(Map.of(
                     "mensaje", "Tramo finalizado exitosamente",
                     "tramoId", actualizado.getId(),
                     "fechaInicio", actualizado.getFechaInicio(),
                     "fechaFin", actualizado.getFechaFin(),
-                    "origen", actualizado.getOrigen().getCiudad().getNombre(),
-                    "destino", actualizado.getDestino().getCiudad().getNombre()));
+                    "origen", actualizado.getOrigen().getNombre(),
+                    "destino", actualizado.getDestino().getNombre()));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

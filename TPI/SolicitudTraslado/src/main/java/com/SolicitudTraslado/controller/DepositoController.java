@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.SolicitudTraslado.domain.Deposito;
@@ -40,12 +41,14 @@ public class DepositoController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<Deposito> crearDeposito(@RequestBody Deposito deposito) {
         Deposito creado = depositoService.crearDeposito(deposito);
         return ResponseEntity.ok(creado);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<Deposito> actualizarDeposito(@PathVariable Long id, @RequestBody Deposito deposito) {
         // Aseguramos que el ID del path se use en el depósito
         deposito.setId(id);

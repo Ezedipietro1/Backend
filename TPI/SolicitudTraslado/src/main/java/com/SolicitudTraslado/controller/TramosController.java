@@ -1,6 +1,7 @@
 package com.SolicitudTraslado.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.SolicitudTraslado.services.TramoService;
 import com.SolicitudTraslado.domain.Tramos;
@@ -42,9 +43,24 @@ public class TramosController {
     }
 
     @GetMapping("/{dominio}")
+    @PreAuthorize("hasRole('ROLE_TRANSPORTISTA')")
     public ResponseEntity<List<Tramos>> obtenerTramoPorDominio(@PathVariable String dominio) {
         List<Tramos> tramo = tramoService.obtenerTramosPorCamionDominio(dominio);
         return ResponseEntity.ok(tramo);
     }
-    
+
+    @PutMapping("/finalizar/{id}")
+    @PreAuthorize("hasRole('ROLE_TRANSPORTISTA')")
+    public ResponseEntity<Tramos> finalizarTramo(@PathVariable Long id) {
+        Tramos finalizado = tramoService.finalizarTramo(id);
+        return ResponseEntity.ok(finalizado);
+    }
+
+    @PutMapping("/iniciar/{id}")
+    @PreAuthorize("hasRole('ROLE_TRANSPORTISTA')")
+    public ResponseEntity<Tramos> iniciarTramo(@PathVariable Long id) {
+        Tramos iniciado = tramoService.iniciaTramos(id);
+        return ResponseEntity.ok(iniciado);
+    }
+
 }

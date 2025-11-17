@@ -1,6 +1,7 @@
 package com.SolicitudTraslado.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.SolicitudTraslado.domain.Camion;
@@ -27,12 +28,14 @@ public class CamionController {
     }
 
     @PostMapping
-    public ResponseEntity<Camion> crearCamion(@RequestBody Camion camion, @RequestHeader("Authorization") String authHeader) {
-        Camion nuevoCamion = camionService.crearCamion(camion, authHeader);
+    @PreAuthorize("hasRole('OPERADOR')")
+    public ResponseEntity<Camion> crearCamion(@RequestBody Camion camion) {
+        Camion nuevoCamion = camionService.crearCamion(camion);
         return ResponseEntity.ok(nuevoCamion);
     }
 
     @PutMapping("/{dominio}")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<Camion> actualizarCamion(@PathVariable String dominio, @RequestBody Camion camion) {
         Camion camionActualizado = camionService.actualizarCamion(camion, dominio);
         return ResponseEntity.ok(camionActualizado);

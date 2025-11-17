@@ -4,15 +4,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.SolicitudTraslado.domain.Ruta;
 import com.SolicitudTraslado.services.RutaService;
+import com.SolicitudTraslado.domain.SolicitudTraslado;
+import com.SolicitudTraslado.services.SolicitudTrasladoService;
 import java.util.Map;
+import java.util.HashMap; 
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/rutas")
 public class RutaController {
     private final RutaService rutaService;
+    private final SolicitudTrasladoService solicitudTrasladoService;
 
-    public RutaController(RutaService rutaService) {
+    public RutaController(RutaService rutaService, SolicitudTrasladoService solicitudTrasladoService) {
         this.rutaService = rutaService;
+        this.solicitudTrasladoService = solicitudTrasladoService;
     }
 
     @PostMapping
@@ -42,6 +48,21 @@ public class RutaController {
     public ResponseEntity<Map<Long, Ruta>> listarRutas() {
         Map<Long, Ruta> rutas = rutaService.listarRutas();
         return ResponseEntity.ok(rutas);
+    }
+
+    @GetMapping("/para_asignar")
+    public ResponseEntity<Map<Long, Ruta>> obtenerRutasParaAsignarASolicitud(@RequestParam Long solicitudId) {
+        // Aquí se asume que existe un método para obtener la solicitud por ID
+        SolicitudTraslado solicitud = solicitudTrasladoService.obtenerSolicitudPorNumero(solicitudId);
+        if (solicitud == null) {
+            return ResponseEntity.notFound().build();
+        }
+        List<Ruta> rutas = rutaService.obtenerRutasParaAsignarASolicitud(solicitud);
+        Map<Long, Ruta> rutaMap = new HashMap<>();
+        for (Ruta ruta : rutas) {
+            rutaMap.put(ruta.getId(), ruta);
+        }
+        return ResponseEntity.ok(rutaMap);
     }
     
 }

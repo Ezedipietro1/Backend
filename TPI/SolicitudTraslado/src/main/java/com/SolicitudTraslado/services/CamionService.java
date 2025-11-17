@@ -7,9 +7,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
-import com.SolicitudTraslado.config.RestTemplateFactory;
 import com.SolicitudTraslado.domain.Camion;
 import com.SolicitudTraslado.domain.Transportista;
 import com.SolicitudTraslado.repo.CamionRepo;
@@ -20,22 +18,15 @@ public class CamionService {
 
     private final CamionRepo camionRepo;
     private final TransportistaRepo transportistaRepo;
-    private final RestTemplateFactory restTemplateFactory;
 
-    public CamionService(CamionRepo camionRepo, TransportistaRepo transportistaRepo, RestTemplateFactory restTemplateFactory) {
+    public CamionService(CamionRepo camionRepo, TransportistaRepo transportistaRepo) {
         this.camionRepo = camionRepo;
         this.transportistaRepo = transportistaRepo;
-        this.restTemplateFactory = restTemplateFactory;
     }
 
     // servicio para que un operador / administrador cree un camion
     @Transactional
-    public Camion crearCamion(Camion camion, String authHeader) {
-        try {
-            // RestTemplate con token para llamadas HTTP autenticadas a otros servicios
-            // String token = authHeader.replace("Bearer ", "");
-            // RestTemplate rt = restTemplateFactory.conToken(token);
-
+    public Camion crearCamion(Camion camion) {
         // validamos los datos del camion
         validarCamion(camion);
 
@@ -67,9 +58,6 @@ public class CamionService {
         }
 
         return camionRepo.save(camion);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Error al crear el camión: " + e.getMessage());
-        }
 
     }
 

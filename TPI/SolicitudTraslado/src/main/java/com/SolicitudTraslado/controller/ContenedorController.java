@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.SolicitudTraslado.domain.Contenedor;
@@ -35,14 +36,21 @@ public class ContenedorController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('OPERADOR') or hasRole('CLIENTE')")
     public ResponseEntity<Contenedor> crearContenedor(@RequestBody Contenedor contenedor) {
         Contenedor creado = contenedorService.crearContenedor(contenedor);
         return ResponseEntity.ok(creado);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<Contenedor> actualizarContenedor(@PathVariable Long id, @RequestBody Contenedor contenedor) {
         Contenedor actualizado = contenedorService.actualizarContenedor(contenedor, id);
         return ResponseEntity.ok(actualizado);
+    }
+
+    @GetMapping("/no_entregados")
+    public ResponseEntity<List<Contenedor>> obtenerContenedoresNoEntregados() {
+        return ResponseEntity.ok(contenedorService.obtenerContenedoresNoEntregados());
     }
 }

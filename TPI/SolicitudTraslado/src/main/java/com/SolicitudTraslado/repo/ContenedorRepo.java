@@ -11,4 +11,5 @@ import com.SolicitudTraslado.domain.enums.EstadoContenedor;
 @Repository
 public interface ContenedorRepo extends JpaRepository<Contenedor, Long> {
     List<Contenedor> findByEstadoContenedor(EstadoContenedor estadoContenedor);
+    List<Contenedor> findByEstadoContenedorNot(EstadoContenedor estadoContenedor);
 }

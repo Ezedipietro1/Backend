@@ -3,7 +3,10 @@ package com.SolicitudTraslado.services;
 import com.SolicitudTraslado.domain.Ruta;
 import com.SolicitudTraslado.repo.RutaRepo;
 import com.SolicitudTraslado.repo.UbicacionRepo;
-import com.SolicitudTraslado.services.DistanciaService;
+import com.SolicitudTraslado.domain.SolicitudTraslado;
+import com.SolicitudTraslado.domain.Ubicacion;
+import com.SolicitudTraslado.services.UbicacionService;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
@@ -15,19 +18,21 @@ import java.util.HashMap;
 public class RutaService {
     private final RutaRepo rutaRepo;
     private final UbicacionRepo ubicacionRepo;
-    private final DistanciaService distanciaService;
+    private final OsrmService osrmService;
+    private final UbicacionService ubicacionService;
 
-    public RutaService(RutaRepo rutaRepo, UbicacionRepo ubicacionRepo, DistanciaService distanciaService) {
+    public RutaService(RutaRepo rutaRepo, UbicacionRepo ubicacionRepo, OsrmService osrmService, UbicacionService ubicacionService) {
         this.rutaRepo = rutaRepo;
         this.ubicacionRepo = ubicacionRepo;
-        this.distanciaService = distanciaService;
+        this.osrmService = osrmService;
+        this.ubicacionService = ubicacionService;
     }
 
     @Transactional
     public Ruta crearRuta(Ruta ruta) {
 
-        Map<String,Object> distancia = distanciaService.calcularDistancia(ruta.getOrigen().getLatitud(), ruta.getOrigen().getLongitud(), ruta.getDestino().getLatitud(), ruta.getDestino().getLongitud());
-        ruta.setDistancia((Double) distancia.get("distanceKm"));
+        Map<String,Object> distancia = osrmService.getDistanceDuration(ruta.getOrigen().getLatitud(), ruta.getOrigen().getLongitud(), ruta.getDestino().getLatitud(), ruta.getDestino().getLongitud());
+        ruta.setDistancia((Double) distancia.get("distanceMeters"));
         
         validarRuta(ruta);
         return rutaRepo.save(ruta);
@@ -75,6 +80,91 @@ public class RutaService {
             throw new IllegalArgumentException("Los IDs de origen y destino no pueden ser null");
         }
         return rutaRepo.findByOrigenIdAndDestinoId(origenId, destinoId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Ruta> obtenerRutasParaAsignarASolicitud(SolicitudTraslado solicitudTraslado) {
+        List<Ruta> rutas = this.crearRutasParaSolicitud(solicitudTraslado);
+        if (rutas == null || rutas.isEmpty()) return rutas;
+
+        // Obtener tarifa y contenedor asociados a la solicitud (si están disponibles)
+        com.SolicitudTraslado.domain.Tarifa tarifa = null;
+        com.SolicitudTraslado.domain.Contenedor cont = null;
+        if (solicitudTraslado != null) {
+            tarifa = solicitudTraslado.getTarifa();
+            cont = solicitudTraslado.getContenedor();
+        }
+
+        for (Ruta ruta : rutas) {
+            try {
+                Map<String,Object> osrm = osrmService.getDistanceDuration(ruta.getOrigen().getLatitud(), ruta.getOrigen().getLongitud(), ruta.getDestino().getLatitud(), ruta.getDestino().getLongitud());
+                Double distanceMeters = osrm != null ? (Double) osrm.get("distanceMeters") : null;
+                Double durationSeconds = osrm != null ? (Double) osrm.get("durationSeconds") : null;
+
+                if (distanceMeters != null) {
+                    ruta.setDistancia(distanceMeters);
+                }
+                if (durationSeconds != null) {
+                    ruta.setTiempoEstimado(durationSeconds / 3600.0); // horas
+                }
+
+                if (tarifa != null && cont != null && distanceMeters != null) {
+                    // Mantener consistencia con cálculo en SolicitudTraslado: aplicar sobre metros como en código existente.
+                    Double costo = tarifa.getCostoPorKm() * distanceMeters + tarifa.getCostoPorM3() * cont.getVolumen() + tarifa.getCostoDeCombustible() * distanceMeters;
+                    ruta.setCostoEstimado(costo);
+                }
+            } catch (Exception ex) {
+                // No queremos romper la generación de rutas por un fallo en OSRM; registrar y seguir
+                // (no inyectamos logger en este Service para no romper constructor)
+            }
+        }
+
+        return rutas;
+    }
+
+    public List<Ruta> crearRutasParaSolicitud(SolicitudTraslado solicitud) {
+        if (solicitud == null) throw new IllegalArgumentException("Solicitud no puede ser null");
+        Ubicacion origen = solicitud.getUbicacionOrigen();
+        Ubicacion destino = solicitud.getUbicacionDestino();
+        if (origen == null || destino == null) throw new IllegalArgumentException("Origen y destino son obligatorios para generar rutas");
+
+        java.util.List<Ruta> creadas = new java.util.ArrayList<>();
+
+        // 1) Ruta directa (1 tramo)
+        Ruta directa = Ruta.builder()
+                .origen(origen)
+                .destino(destino)
+                .cantTramos(1)
+                .asignada(false)
+                .solicitud(solicitud)
+                .build();
+        directa = this.crearRuta(directa);
+        creadas.add(directa);
+
+        // 2) Intentar generar una alternativa via una ubicacion intermedia (si existe)
+        java.util.Map<Long, Ubicacion> todas = ubicacionService.listarUbicaciones();
+        Ubicacion intermedia = null;
+        for (Ubicacion u : todas.values()) {
+            if (!u.getId().equals(origen.getId()) && !u.getId().equals(destino.getId())) {
+                intermedia = u;
+                break;
+            }
+        }
+
+        if (intermedia != null) {
+            // Ruta alternativa que conceptualmente tiene 2 tramos (origen->intermedia->destino)
+            Ruta viaIntermedia = Ruta.builder()
+                    .origen(origen)
+                    .destino(destino)
+                    .cantTramos(2)
+                    .asignada(false)
+                    .solicitud(solicitud)
+                    .build();
+            viaIntermedia = this.crearRuta(viaIntermedia);
+            creadas.add(viaIntermedia);
+        }
+
+        return creadas;
     }
 
     

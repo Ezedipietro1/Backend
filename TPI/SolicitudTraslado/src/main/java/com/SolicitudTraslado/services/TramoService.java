@@ -1,5 +1,6 @@
 package com.SolicitudTraslado.services;
 
+import com.SolicitudTraslado.domain.Camion;
 import com.SolicitudTraslado.domain.Tramos;
 import com.SolicitudTraslado.domain.enums.TipoTramo;
 import com.SolicitudTraslado.repo.TramoRepo;
@@ -42,16 +43,33 @@ public class TramoService {
     }
 
     @Transactional 
-    public Tramos actualizarFechaFin(Long tramoId, Date nuevaFechaFin) {
-        Tramos tramo = tramoRepo.findById(tramoId)
-                .orElseThrow(() -> new IllegalArgumentException("Tramo no encontrado con ID: " + tramoId));
+   public Tramos finalizarTramo(Long id) {
+        Tramos tramo = tramoRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Tramo no encontrado con id: " + id));
 
-        if (nuevaFechaFin != null && nuevaFechaFin.before(tramo.getFechaInicio())) {
-            throw new IllegalArgumentException("La nueva fecha fin no puede ser anterior a la fecha de inicio");
+        if (tramo.getFechaFin() != null) {
+            throw new IllegalArgumentException("El tramo ya ha sido finalizado");
         }
 
-        tramo.setFechaFin(nuevaFechaFin);
-        return tramoRepo.save(tramo);
+        tramo.setFechaFin(new Date(System.currentTimeMillis()));
+        tramo.setEstadoTramo(com.SolicitudTraslado.domain.enums.EstadoTramo.COMPLETADO);
+        tramoRepo.save(tramo);
+        return tramo;
+    }
+
+    @Transactional
+    public Tramos iniciaTramos(Long id) {
+        Tramos tramo = tramoRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Tramo no encontrado con id: " + id));
+
+        if (tramo.getFechaInicio() != null) {
+            throw new IllegalArgumentException("El tramo ya ha sido iniciado");
+        }
+
+        tramo.setFechaInicio(new Date(System.currentTimeMillis()));
+        tramo.setEstadoTramo(com.SolicitudTraslado.domain.enums.EstadoTramo.EN_PROGRESO);
+        tramoRepo.save(tramo);
+        return tramo;
     }
 
     @Transactional(readOnly = true)
@@ -82,6 +100,24 @@ public class TramoService {
             throw new IllegalArgumentException("Dominio del camión no puede ser null o vacío");
         }
         return tramoRepo.findByCamionDominio(dominio);
+    }
+
+    @Transactional
+    public void asignarCamionATramo(Tramos tramo, Camion camion) {
+        if (tramo == null) {
+            throw new IllegalArgumentException("Tramo no puede ser null");
+        }
+        if (camion == null || camion.getDominio() == null || camion.getDominio().trim().isEmpty()) {
+            throw new IllegalArgumentException("Dominio del camión no puede ser null o vacío");
+        }
+
+        // Verificar que el camión existe
+        camionRepo.findById(camion.getDominio())
+                .orElseThrow(() -> new IllegalArgumentException("Camión no encontrado con dominio: " + camion.getDominio()));
+
+        // Asignar el camión al tramo
+        tramo.setCamion(camionRepo.findById(camion.getDominio()).get());
+        tramoRepo.save(tramo);
     }
 
     // Validaciones para Tramos

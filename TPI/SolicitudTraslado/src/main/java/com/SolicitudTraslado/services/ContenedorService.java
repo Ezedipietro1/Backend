@@ -73,6 +73,11 @@ public class ContenedorService {
         return contenedorRepo.findByEstadoContenedor(EstadoContenedor.EN_DEPOSITO);
     }
 
+    @Transactional(readOnly = true)
+    public List<Contenedor> obtenerContenedoresNoEntregados() {
+        return contenedorRepo.findByEstadoContenedorNot(EstadoContenedor.ENTREGADO);
+    }
+
     // ==================== MÉTODOS PRIVADOS DE VALIDACIÓN ====================
 
     private void validarContenedor(Contenedor contenedor) {

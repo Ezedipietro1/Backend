@@ -5,22 +5,19 @@ import com.SolicitudTraslado.domain.enums.EstadoSolicitud;
 import com.SolicitudTraslado.repo.SolicitudTrasladoRepo;
 
 import com.SolicitudTraslado.domain.Ubicacion;
-import com.SolicitudTraslado.services.UbicacionService;
-
+import com.SolicitudTraslado.domain.Camion;
 import com.SolicitudTraslado.domain.Cliente;
 
 import com.SolicitudTraslado.domain.Contenedor;
-import com.SolicitudTraslado.services.ContenedorService;
 
 import com.SolicitudTraslado.repo.RutaRepo;
 import com.SolicitudTraslado.domain.Ruta;
-import com.SolicitudTraslado.services.RutaService;
 
 import com.SolicitudTraslado.domain.Tarifa;
-import com.SolicitudTraslado.services.TarifaService;
 import com.SolicitudTraslado.repo.TarifaRepo;
 
-import com.SolicitudTraslado.services.DistanciaService;
+import com.SolicitudTraslado.domain.Tramos;
+
 
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
@@ -38,22 +35,24 @@ public class SolicitudTrasladoService {
     private static final Logger log = LoggerFactory.getLogger(SolicitudTrasladoService.class);
     private final SolicitudTrasladoRepo solicitudTrasladoRepo;
     private final RutaRepo rutaRepo;
-    private final RutaService rutaService;
     private final ContenedorService contenedorService;
     private final TarifaService tarifaService;
     private final TarifaRepo tarifaRepo;
     private final UbicacionService ubicacionService;
-    private final DistanciaService distanciaService;
+    private final OsrmService osrmService;
+    private final TramoService tramoService;
+    private final CamionService camionService;
 
-    public SolicitudTrasladoService(SolicitudTrasladoRepo solicitudTrasladoRepo, RutaRepo rutaRepo, RutaService rutaService, ContenedorService contenedorService, TarifaRepo tarifaRepo, TarifaService tarifaService, UbicacionService ubicacionService, DistanciaService distanciaService) {
+    public SolicitudTrasladoService(SolicitudTrasladoRepo solicitudTrasladoRepo, RutaRepo rutaRepo, ContenedorService contenedorService, TarifaRepo tarifaRepo, TarifaService tarifaService, UbicacionService ubicacionService, OsrmService osrmService, TramoService tramoService, CamionService camionService) {
         this.solicitudTrasladoRepo = solicitudTrasladoRepo;
         this.rutaRepo = rutaRepo;
-        this.rutaService = rutaService;
         this.contenedorService = contenedorService;
         this.tarifaRepo = tarifaRepo;
         this.tarifaService = tarifaService;
         this.ubicacionService = ubicacionService;
-        this.distanciaService = distanciaService;
+        this.osrmService = osrmService;
+        this.tramoService = tramoService;
+        this.camionService = camionService;
     }
 
     @Transactional
@@ -77,11 +76,12 @@ public class SolicitudTrasladoService {
 
         EstadoSolicitud estadoInicial = EstadoSolicitud.BORRADOR;
 
-        Map<String,Object> distancia = distanciaService.calcularDistancia(origenCreada.getLatitud(), origenCreada.getLongitud(), destinoCreada.getLatitud(), destinoCreada.getLongitud());
+        Map<String,Object> distancia = osrmService.getDistanceDuration(origenCreada.getLatitud(), origenCreada.getLongitud(), destinoCreada.getLatitud(), destinoCreada.getLongitud());
+        Map<String,Object> duracion = osrmService.getDistanceDuration(origenCreada.getLatitud(), origenCreada.getLongitud(), destinoCreada.getLatitud(), destinoCreada.getLongitud());
 
-        Double costoEstimado = tarifaDefault.getCostoPorKm() * (Double) distancia.get("distanceKm") + tarifaDefault.getCostoPorM3() * contenedorNuevo.getVolumen() + tarifaDefault.getCostoDeCombustible() * 1.0 * (Double) distancia.get("distanceKm");
+        Double costoEstimado = tarifaDefault.getCostoPorKm() * (Double) distancia.get("distanceMeters") + tarifaDefault.getCostoPorM3() * contenedorNuevo.getVolumen() + tarifaDefault.getCostoDeCombustible() * 1.0 * (Double) distancia.get("distanceMeters");
 
-        Double tiempoEstimado = (Double) distancia.get("distanceKm") / 80.0; // asumiendo velocidad promedio de 60 km/h
+        Double tiempoEstimado = (Double) duracion.get("durationSeconds") / 3600.0; // en horas
 
         SolicitudTraslado nuevaSolicitud = SolicitudTraslado.builder()
                 .clienteId(clienteNuevo.getId())
@@ -96,49 +96,16 @@ public class SolicitudTrasladoService {
         return solicitudTrasladoRepo.save(nuevaSolicitud);
     }
 
-    private List<Ruta> crearRutasParaSolicitud(SolicitudTraslado solicitud) {
-        if (solicitud == null) throw new IllegalArgumentException("Solicitud no puede ser null");
-        Ubicacion origen = solicitud.getUbicacionOrigen();
-        Ubicacion destino = solicitud.getUbicacionDestino();
-        if (origen == null || destino == null) throw new IllegalArgumentException("Origen y destino son obligatorios para generar rutas");
-
-        java.util.List<Ruta> creadas = new java.util.ArrayList<>();
-
-        // 1) Ruta directa (1 tramo)
-        Ruta directa = Ruta.builder()
-                .origen(origen)
-                .destino(destino)
-                .cantTramos(1)
-                .asignada(false)
-                .solicitud(solicitud)
-                .build();
-        directa = rutaService.crearRuta(directa);
-        creadas.add(directa);
-
-        // 2) Intentar generar una alternativa via una ubicacion intermedia (si existe)
-        java.util.Map<Long, Ubicacion> todas = ubicacionService.listarUbicaciones();
-        Ubicacion intermedia = null;
-        for (Ubicacion u : todas.values()) {
-            if (!u.getId().equals(origen.getId()) && !u.getId().equals(destino.getId())) {
-                intermedia = u;
-                break;
-            }
+    @Transactional
+    public void asignarRutaASolicitud(SolicitudTraslado solicitud, Ruta ruta) {
+        if (solicitud == null || ruta == null) {
+            throw new IllegalArgumentException("Solicitud y Ruta no pueden ser null");
         }
+        solicitud.setRuta(ruta);
+        solicitudTrasladoRepo.save(solicitud);
 
-        if (intermedia != null) {
-            // Ruta alternativa que conceptualmente tiene 2 tramos (origen->intermedia->destino)
-            Ruta viaIntermedia = Ruta.builder()
-                    .origen(origen)
-                    .destino(destino)
-                    .cantTramos(2)
-                    .asignada(false)
-                    .solicitud(solicitud)
-                    .build();
-            viaIntermedia = rutaService.crearRuta(viaIntermedia);
-            creadas.add(viaIntermedia);
-        }
-
-        return creadas;
+        ruta.setAsignada(true);
+        rutaRepo.save(ruta);
     }
 
     @Transactional
@@ -179,7 +146,92 @@ public class SolicitudTrasladoService {
         }
         return solicitudTrasladoRepo.findByClienteId(clienteId);
     }
-    
+
+    @Transactional
+    public void asignarCamionATramo(Long solicitudId, Long tramoId, String dominioCamion) {
+        if (solicitudId == null || tramoId == null || dominioCamion == null || dominioCamion.trim().isEmpty()) {
+            throw new IllegalArgumentException("Solicitud, Tramo y dominio del camión no pueden ser null o vacíos");
+        }
+
+        Tramos tramo = tramoService.obtenerTramoPorId(tramoId);
+        if (tramo == null) {
+            throw new IllegalArgumentException("Tramo no encontrado con ID: " + tramoId);
+        }
+
+        Camion camion = camionService.obtenerCamionPorDominio(dominioCamion);
+        if (camion == null) {
+            throw new IllegalArgumentException("Camión no encontrado con dominio: " + dominioCamion);
+        }
+
+        SolicitudTraslado solicitud = obtenerSolicitudPorNumero(solicitudId);
+        if (solicitud == null) {
+            throw new IllegalArgumentException("Solicitud no encontrada con ID: " + solicitudId);
+        }
+
+        if (solicitud.getContenedor().getPeso() > camion.getCapKg()) {
+            throw new IllegalArgumentException("El peso del contenedor excede la capacidad máxima del camión");
+        }
+
+        if (solicitud.getContenedor().getVolumen() > camion.getCapVolumen()) {
+            throw new IllegalArgumentException("El volumen del contenedor excede la capacidad máxima del camión");
+        }
+        tramoService.asignarCamionATramo(tramo, camion);
+        
+    }
+
+    @Transactional
+    public SolicitudTraslado finalizarSolicitudTraslado(Long solicitudId) {
+        SolicitudTraslado solicitud = obtenerSolicitudPorNumero(solicitudId);
+        if (solicitud == null) {
+            throw new IllegalArgumentException("Solicitud no encontrada con ID: " + solicitudId);
+        }
+        // Finalizar todos los tramos asociados a la ruta (si no están finalizados)
+        Ruta ruta = solicitud.getRuta();
+        double tiempoRealHoras = 0.0;
+        if (ruta != null && ruta.getTramos() != null) {
+            for (Tramos tramo : ruta.getTramos()) {
+                // Intentar finalizar tramo mediante el servicio (maneja validaciones)
+                try {
+                    if (tramo.getFechaFin() == null) {
+                        tramoService.finalizarTramo(tramo.getId());
+                        // recargar tramo para obtener fechas
+                    }
+                } catch (Exception ex) {
+                    // no queremos abortar todo por un fallo en un tramo; registramos y seguimos
+                    log.warn("No se pudo finalizar tramo id={}: {}", tramo.getId(), ex.getMessage());
+                }
+            }
+
+            // Recalcular tiempo real sumando duración de tramos (cuando existan fechas)
+            for (Tramos t : ruta.getTramos()) {
+                java.sql.Date inicio = t.getFechaInicio();
+                java.sql.Date fin = t.getFechaFin();
+                if (inicio != null && fin != null) {
+                    long millis = fin.getTime() - inicio.getTime();
+                    if (millis > 0) {
+                        tiempoRealHoras += millis / 1000.0 / 3600.0;
+                    }
+                }
+            }
+        }
+
+        // Calcular costo final usando la tarifa asociada y la distancia de la ruta (si existe)
+        Double costoFinal = null;
+        if (solicitud.getTarifa() != null && ruta != null && ruta.getDistancia() != null && solicitud.getContenedor() != null) {
+            Tarifa tarifa = solicitud.getTarifa();
+            Double distanceMeters = ruta.getDistancia();
+            Double volumen = solicitud.getContenedor().getVolumen();
+            costoFinal = tarifa.getCostoPorKm() * distanceMeters + tarifa.getCostoPorM3() * volumen + tarifa.getCostoDeCombustible() * distanceMeters;
+        }
+
+        // Actualizar la solicitud
+        if (costoFinal != null) solicitud.setCostoFinal(costoFinal);
+        if (Double.valueOf(tiempoRealHoras) != null && tiempoRealHoras > 0) solicitud.setTiempoReal(tiempoRealHoras);
+        solicitud.setEstado(EstadoSolicitud.COMPLETADA);
+        solicitudTrasladoRepo.save(solicitud);
+        return solicitud;
+    }
+
     // Validaciones para SolicitudTraslado
     private void validarSolicitud(SolicitudTraslado s) {
         if (s == null) {

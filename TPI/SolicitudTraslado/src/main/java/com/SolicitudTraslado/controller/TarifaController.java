@@ -3,6 +3,7 @@ package com.SolicitudTraslado.controller;
 import java.util.HashMap;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.SolicitudTraslado.domain.Tarifa;
@@ -29,12 +30,14 @@ public class TarifaController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<Tarifa> crearTarifa(@RequestBody Tarifa tarifa) {
         Tarifa creada = tarifaService.crearTarifa(tarifa);
         return ResponseEntity.ok(creada);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<Tarifa> actualizarTarifa(@PathVariable Long id, @RequestBody Tarifa tarifa) {
         // Aseguramos que el ID del path se use en la tarifa
         tarifa.setId(id);

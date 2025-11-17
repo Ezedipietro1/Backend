@@ -3,13 +3,14 @@ package com.SolicitudTraslado.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.SolicitudTraslado.domain.Ciudad;
 import com.SolicitudTraslado.services.CiudadService;
 
 @RestController
-@RequestMapping("/api/ciudades")
+@RequestMapping("/api/solicitudes/ciudades")
 public class CiudadController {
 
     private final CiudadService ciudadService;
@@ -19,11 +20,13 @@ public class CiudadController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<List<Ciudad>> listarCiudades() {
         return ResponseEntity.ok(ciudadService.listarCiudades());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<Ciudad> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(ciudadService.obtenerCiudadPorId(id));
     }
@@ -34,12 +37,14 @@ public class CiudadController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<Ciudad> crearCiudad(@RequestBody Ciudad ciudad) {
         Ciudad creada = ciudadService.crearCiudad(ciudad);
         return ResponseEntity.ok(creada);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<Ciudad> actualizarCiudad(@PathVariable Long id, @RequestBody Ciudad ciudad) {
         // Aseguramos que el ID del path se use en la ciudad
         ciudad.setId(id);

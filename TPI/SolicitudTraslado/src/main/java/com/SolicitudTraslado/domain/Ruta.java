@@ -41,4 +41,10 @@ public class Ruta {
 
     @Column(nullable = false)
     private Boolean asignada;
+
+    @Transient
+    private Double tiempoEstimado;
+
+    @Transient
+    private Double costoEstimado;
 }

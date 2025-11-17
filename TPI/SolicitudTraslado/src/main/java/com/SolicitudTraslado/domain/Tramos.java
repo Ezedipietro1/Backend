@@ -24,11 +24,11 @@ public class Tramos {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "origen_id", nullable = false)
-    private Ubicacion origen;
+    private Deposito origen;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "destino_id", nullable = false)
-    private Ubicacion destino;
+    private Deposito destino;
 
     @Column(nullable = false)
     private Date fechaInicio;
