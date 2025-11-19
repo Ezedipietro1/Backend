@@ -1,12 +1,16 @@
 package com.SolicitudTraslado.services;
 
 import com.SolicitudTraslado.domain.Ciudad;
+import com.SolicitudTraslado.dto.CiudadDTO;
+import com.SolicitudTraslado.dto.DtoMapper;
 import com.SolicitudTraslado.repo.CiudadRepo;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class CiudadService {
@@ -17,32 +21,40 @@ public class CiudadService {
     }
 
     @Transactional(readOnly = true)
-    public Ciudad obtenerCiudadPorId(Long id) {
-        return ciudadRepo.findById(id)
+    public CiudadDTO obtenerCiudadPorId(Long id) {
+        Ciudad ciudad = ciudadRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Ciudad no encontrada con ID: " + id));
+        return DtoMapper.toCiudadDto(ciudad);
     }
 
     @Transactional(readOnly = true)
-    public Ciudad obtenerCiudadPorNombre(String nombre) {
-        return ciudadRepo.findByNombreIgnoreCase(nombre)
+    public CiudadDTO obtenerCiudadPorNombre(String nombre) {
+        Ciudad ciudad = ciudadRepo.findByNombreIgnoreCase(nombre)
                 .orElseThrow(() -> new IllegalArgumentException("Ciudad no encontrada con nombre: " + nombre));
+        return DtoMapper.toCiudadDto(ciudad);
     }
     
     @Transactional
-    public Ciudad crearCiudad(Ciudad ciudad) {
+    public CiudadDTO crearCiudad(CiudadDTO ciudadDto) {
+        Ciudad ciudad = DtoMapper.toCiudadEntity(ciudadDto);
         validarCiudad(ciudad);
-        return ciudadRepo.save(ciudad);
+        Ciudad guardada = ciudadRepo.save(ciudad);
+        return DtoMapper.toCiudadDto(guardada);
     }
 
     @Transactional
-    public Ciudad actualizarCiudad(Ciudad ciudadActualizada) {  
-        validarCiudad(ciudadActualizada);
-        return ciudadRepo.save(ciudadActualizada);
+    public CiudadDTO actualizarCiudad(CiudadDTO ciudadActualizada) {  
+        Ciudad ciudad = DtoMapper.toCiudadEntity(ciudadActualizada);
+        validarCiudad(ciudad);
+        Ciudad guardada = ciudadRepo.save(ciudad);
+        return DtoMapper.toCiudadDto(guardada);
     }
 
     @Transactional(readOnly = true)
-    public java.util.List<Ciudad> listarCiudades() {
-        return ciudadRepo.findAll();
+    public List<CiudadDTO> listarCiudades() {
+        return ciudadRepo.findAll().stream()
+                .map(DtoMapper::toCiudadDto)
+                .collect(Collectors.toList());
     }
 
     // Validación para Ciudad (similar al ejemplo del cliente)

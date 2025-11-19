@@ -1,17 +1,24 @@
 package com.SolicitudTraslado.controller;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.method.P;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import com.SolicitudTraslado.domain.Cliente;
-import com.SolicitudTraslado.domain.Contenedor;
-import com.SolicitudTraslado.domain.Ruta;
-import com.SolicitudTraslado.services.RutaService;
-import com.SolicitudTraslado.domain.SolicitudTraslado;
-import com.SolicitudTraslado.services.SolicitudTrasladoService;
 import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.SolicitudTraslado.domain.Ruta;
+import com.SolicitudTraslado.domain.SolicitudTraslado;
+import com.SolicitudTraslado.dto.SolicitudTrasladoCreateRequest;
+import com.SolicitudTraslado.dto.SolicitudTrasladoDTO;
+import com.SolicitudTraslado.services.RutaService;
+import com.SolicitudTraslado.services.SolicitudTrasladoService;
 
 @RestController
 @RequestMapping("/api/solicitudes/solicitudTraslado")
@@ -26,15 +33,26 @@ public class SolicitudTrasladoController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('CLIENTE')")
-    public ResponseEntity<SolicitudTraslado> crear(Long clienteId, String nombre, String apellido, String telefono, boolean activo, String email, Double volumen, Double peso, Long ubicacionOrigenId, Long ubicacionDestinoId) {
-        SolicitudTraslado creada = solicitudTrasladoService.crearSolicitudTraslado(clienteId, nombre, apellido, telefono, activo, email, volumen, peso, ubicacionOrigenId, ubicacionDestinoId);
+    @PreAuthorize("hasRole('CLIENTE') or hasRole('OPERADOR')")
+    public ResponseEntity<SolicitudTrasladoDTO> crear(
+            @RequestBody SolicitudTrasladoCreateRequest request) {
+        SolicitudTrasladoDTO creada = solicitudTrasladoService.crearSolicitudTrasladoDto(
+                request.getClienteId(),
+                request.getNombre(),
+                request.getApellido(),
+                request.getTelefono(),
+                request.isActivo(),
+                request.getEmail(),
+                request.getVolumen(),
+                request.getPeso(),
+                request.getUbicacionOrigenId(),
+                request.getUbicacionDestinoId());
         return ResponseEntity.ok(creada);
     }
 
     @GetMapping("/{numero}")
-    public ResponseEntity<SolicitudTraslado> obtenerPorId(@PathVariable Long numero) {
-        SolicitudTraslado solicitud = solicitudTrasladoService.obtenerSolicitudPorNumero(numero);
+    public ResponseEntity<SolicitudTrasladoDTO> obtenerPorId(@PathVariable Long numero) {
+        SolicitudTrasladoDTO solicitud = solicitudTrasladoService.obtenerSolicitudDtoPorNumero(numero);
         if (solicitud != null) {
             return ResponseEntity.ok(solicitud);
         } else {
@@ -43,33 +61,34 @@ public class SolicitudTrasladoController {
     }
 
     @GetMapping
-    public ResponseEntity<Map<Long, SolicitudTraslado>> listarSolicitudes() {
-        Map<Long, SolicitudTraslado> solicitudes = solicitudTrasladoService.listarSolicitudes();
+    public ResponseEntity<Map<Long, SolicitudTrasladoDTO>> listarSolicitudes() {
+        Map<Long, SolicitudTrasladoDTO> solicitudes = solicitudTrasladoService.listarSolicitudesDto();
         return ResponseEntity.ok(solicitudes);
     }
 
     @PutMapping("/{numero}")
-    public ResponseEntity<SolicitudTraslado> actualizar(@PathVariable Long numero, @RequestBody SolicitudTraslado solicitud) {
+    public ResponseEntity<SolicitudTrasladoDTO> actualizar(@PathVariable Long numero,
+            @RequestBody SolicitudTrasladoDTO solicitud) {
         solicitud.setNumero(numero);
-        SolicitudTraslado actualizada = solicitudTrasladoService.actualizarSolicitudTraslado(solicitud);
+        SolicitudTrasladoDTO actualizada = solicitudTrasladoService.actualizarSolicitudTraslado(solicitud);
         return ResponseEntity.ok(actualizada);
     }
 
     @PutMapping("/{numero}/asignar_ruta/{rutaId}")
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<SolicitudTraslado> asignarRuta(@PathVariable Long numero, @PathVariable Long rutaId) {
+    public ResponseEntity<SolicitudTrasladoDTO> asignarRuta(@PathVariable Long numero, @PathVariable Long rutaId) {
         SolicitudTraslado solicitud = solicitudTrasladoService.obtenerSolicitudPorNumero(numero);
         Ruta ruta = rutaService.obtenerRutaPorId(rutaId);
         if (solicitud == null || ruta == null) {
             return ResponseEntity.notFound().build();
         }
         solicitudTrasladoService.asignarRutaASolicitud(solicitud, ruta);
-        return ResponseEntity.ok(solicitud);
+        return ResponseEntity.ok(solicitudTrasladoService.obtenerSolicitudDtoPorNumero(numero));
     }
 
     @PutMapping("/{numero}/asignarCamionATramo")
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<SolicitudTraslado> asignarCamionATramo(
+    public ResponseEntity<Void> asignarCamionATramo(
             @PathVariable Long numero,
             @RequestParam Long tramoId,
             @RequestParam String dominioCamion) {
@@ -77,14 +96,14 @@ public class SolicitudTrasladoController {
             solicitudTrasladoService.asignarCamionATramo(numero, tramoId, dominioCamion);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().build();
         }
     }
 
     @PutMapping("/{numero}/finalizarSolicitud")
-    public ResponseEntity<SolicitudTraslado> finalizarSolicitud(@PathVariable Long numero) {
+    public ResponseEntity<SolicitudTrasladoDTO> finalizarSolicitud(@PathVariable Long numero) {
         try {
-            SolicitudTraslado finalizada = solicitudTrasladoService.finalizarSolicitudTraslado(numero);
+            SolicitudTrasladoDTO finalizada = solicitudTrasladoService.finalizarSolicitudTrasladoDto(numero);
             return ResponseEntity.ok(finalizada);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(null);

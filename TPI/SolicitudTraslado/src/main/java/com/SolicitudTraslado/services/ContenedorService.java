@@ -3,12 +3,15 @@ package com.SolicitudTraslado.services;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.SolicitudTraslado.domain.Contenedor;
 import com.SolicitudTraslado.domain.enums.EstadoContenedor;
+import com.SolicitudTraslado.dto.ContenedorDTO;
+import com.SolicitudTraslado.dto.DtoMapper;
 import com.SolicitudTraslado.repo.ContenedorRepo;
 
 @Service
@@ -20,7 +23,51 @@ public class ContenedorService {
         this.contenedorRepo = contenedorRepo;
     }
 
-    // servicio para crear un contenedor
+    // ==================== MÉTODOS USADOS POR CONTROLADORES ====================
+
+    @Transactional
+    public ContenedorDTO crearContenedor(ContenedorDTO contenedorDto) {
+        Contenedor contenedor = crearContenedor(DtoMapper.toContenedorEntity(contenedorDto));
+        return DtoMapper.toContenedorDto(contenedor);
+    }
+
+    @Transactional
+    public ContenedorDTO actualizarContenedor(ContenedorDTO contenedorDto, Long id) {
+        Contenedor actualizado = actualizarContenedor(DtoMapper.toContenedorEntity(contenedorDto), id);
+        return DtoMapper.toContenedorDto(actualizado);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, ContenedorDTO> listarContenedoresDto() {
+        List<Contenedor> contenedores = contenedorRepo.findAll();
+        Map<Long, ContenedorDTO> contenedorMap = new HashMap<>();
+        for (Contenedor contenedor : contenedores) {
+            contenedorMap.put(contenedor.getId(), DtoMapper.toContenedorDto(contenedor));
+        }
+        return contenedorMap;
+    }
+
+    @Transactional(readOnly = true)
+    public ContenedorDTO obtenerContenedorDtoPorId(Long id) {
+        return DtoMapper.toContenedorDto(obtenerContenedorPorId(id));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ContenedorDTO> obtenerContenedoresEnDepositoDto() {
+        return contenedorRepo.findByEstadoContenedor(EstadoContenedor.EN_DEPOSITO).stream()
+                .map(DtoMapper::toContenedorDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ContenedorDTO> obtenerContenedoresNoEntregadosDto() {
+        return contenedorRepo.findByEstadoContenedorNot(EstadoContenedor.ENTREGADO).stream()
+                .map(DtoMapper::toContenedorDto)
+                .collect(Collectors.toList());
+    }
+
+    // ==================== MÉTODOS USADOS POR OTROS SERVICIOS ====================
+
     @Transactional
     public Contenedor crearContenedor(Contenedor contenedor) {
         // validamos que no exista otro contenedor con el mismo id

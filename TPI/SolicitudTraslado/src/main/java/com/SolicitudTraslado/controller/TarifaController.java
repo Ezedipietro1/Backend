@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import com.SolicitudTraslado.domain.Tarifa;
+import com.SolicitudTraslado.dto.TarifaDTO;
 import com.SolicitudTraslado.services.TarifaService;
 
 @RestController
@@ -20,41 +20,40 @@ public class TarifaController {
     }
 
     @GetMapping
-    public ResponseEntity<HashMap<Long, Tarifa>> listarTarifas() {
-        return ResponseEntity.ok(tarifaService.listarTarifas());
+    public ResponseEntity<HashMap<Long, TarifaDTO>> listarTarifas() {
+        return ResponseEntity.ok(tarifaService.listarTarifasDto());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Tarifa> obtenerPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(tarifaService.obtenerTarifaPorId(id));
+    public ResponseEntity<TarifaDTO> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(tarifaService.obtenerTarifaDtoPorId(id));
     }
 
     @PostMapping
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<Tarifa> crearTarifa(@RequestBody Tarifa tarifa) {
-        Tarifa creada = tarifaService.crearTarifa(tarifa);
+    public ResponseEntity<TarifaDTO> crearTarifa(@RequestBody TarifaDTO tarifa) {
+        TarifaDTO creada = tarifaService.crearTarifa(tarifa);
         return ResponseEntity.ok(creada);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<Tarifa> actualizarTarifa(@PathVariable Long id, @RequestBody Tarifa tarifa) {
-        // Aseguramos que el ID del path se use en la tarifa
+    public ResponseEntity<TarifaDTO> actualizarTarifa(@PathVariable Long id, @RequestBody TarifaDTO tarifa) {
         tarifa.setId(id);
-        Tarifa actualizada = tarifaService.actualizarTarifa(tarifa);
+        TarifaDTO actualizada = tarifaService.actualizarTarifa(tarifa);
         return ResponseEntity.ok(actualizada);
     }
 
     // Endpoints para la tarifa única (actual)
     @GetMapping("/current")
-    public ResponseEntity<Tarifa> getTarifaActual() {
-        Tarifa t = tarifaService.obtenerTarifa();
+    public ResponseEntity<TarifaDTO> getTarifaActual() {
+        TarifaDTO t = tarifaService.obtenerTarifaDto();
         return ResponseEntity.ok(t);
     }
 
     @PutMapping("/current")
-    public ResponseEntity<Tarifa> updateTarifaActual(@RequestBody Tarifa tarifa) {
-        Tarifa actualizado = tarifaService.actualizarTarifa(tarifa);
+    public ResponseEntity<TarifaDTO> updateTarifaActual(@RequestBody TarifaDTO tarifa) {
+        TarifaDTO actualizado = tarifaService.actualizarTarifa(tarifa);
         return ResponseEntity.ok(actualizado);
     }
 }

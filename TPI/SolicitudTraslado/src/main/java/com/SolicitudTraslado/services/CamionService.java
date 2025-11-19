@@ -1,15 +1,15 @@
 package com.SolicitudTraslado.services;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.SolicitudTraslado.domain.Camion;
 import com.SolicitudTraslado.domain.Transportista;
+import com.SolicitudTraslado.dto.CamionDTO;
+import com.SolicitudTraslado.dto.DtoMapper;
 import com.SolicitudTraslado.repo.CamionRepo;
 import com.SolicitudTraslado.repo.TransportistaRepo;
 
@@ -24,9 +24,11 @@ public class CamionService {
         this.transportistaRepo = transportistaRepo;
     }
 
-    // servicio para que un operador / administrador cree un camion
+    // ==================== MÉTODOS USADOS POR CONTROLADORES ====================
+
     @Transactional
-    public Camion crearCamion(Camion camion) {
+    public CamionDTO crearCamion(CamionDTO camionDto) {
+        Camion camion = DtoMapper.toCamionEntity(camionDto);
         // validamos los datos del camion
         validarCamion(camion);
 
@@ -57,41 +59,50 @@ public class CamionService {
             camion.setEstado(true);
         }
 
-        return camionRepo.save(camion);
-
+        Camion guardado = camionRepo.save(camion);
+        return DtoMapper.toCamionDto(guardado);
     }
 
-    // servicio para que un operador / administrador actualice un camion
     @Transactional
-    public Camion actualizarCamion(Camion camion, String dominio) {
+    public CamionDTO actualizarCamion(CamionDTO camionDto, String dominio) {
         Camion camionExistente = camionRepo.findById(dominio)
                 .orElseThrow(() -> new IllegalArgumentException("Camión no encontrado con dominio: " + dominio));
 
         // actualizo los campos que pueden ser modificados
-        validarCamion(camion);
+        Camion data = DtoMapper.toCamionEntity(camionDto);
+        validarCamion(data);
 
-        return camionRepo.save(camionExistente);
+        camionExistente.setCapKg(data.getCapKg());
+        camionExistente.setCapVolumen(data.getCapVolumen());
+        camionExistente.setConsumo(data.getConsumo());
+        camionExistente.setEstado(data.getEstado());
+
+        if (data.getTransportista() != null && data.getTransportista().getDni() != null) {
+            Transportista transportista = transportistaRepo.findById(data.getTransportista().getDni())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "No se encontró un transportista con el DNI: " + data.getTransportista().getDni()));
+            camionExistente.setTransportista(transportista);
+        }
+
+        Camion actualizado = camionRepo.save(camionExistente);
+        return DtoMapper.toCamionDto(actualizado);
 
     }
 
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> listarCamiones() {
-        List<Camion> camiones = camionRepo.findAll();
-        List<Map<String, Object>> resultado = new ArrayList<>();
-
-        for (Camion camion : camiones) {
-            Map<String, Object> camionData = new HashMap<>();
-            camionData.put("dominio", camion.getDominio());
-            camionData.put("capKg", camion.getCapKg());
-            camionData.put("capVolumen", camion.getCapVolumen());
-            camionData.put("consumo", camion.getConsumo());
-            camionData.put("estado", camion.getEstado());
-            camionData.put("transportistaDni", camion.getTransportista().getDni());
-            resultado.add(camionData);
-        }
-
-        return resultado;
+    public List<CamionDTO> listarCamiones() {
+        return camionRepo.findAll().stream()
+                .map(DtoMapper::toCamionDto)
+                .collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
+    public CamionDTO obtenerCamionDetallePorDominio(String dominio) {
+        Camion camion = obtenerCamionPorDominio(dominio);
+        return DtoMapper.toCamionDto(camion);
+    }
+
+    // ==================== MÉTODOS USADOS POR OTROS SERVICIOS ====================
 
     // analizar si es mejor devolver un map o el objeto camion directamente !!!!
     @Transactional(readOnly = true)

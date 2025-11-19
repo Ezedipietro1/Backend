@@ -2,7 +2,7 @@ package com.SolicitudTraslado.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.SolicitudTraslado.domain.Ruta;
+import com.SolicitudTraslado.dto.RutaDTO;
 import com.SolicitudTraslado.services.RutaService;
 import com.SolicitudTraslado.domain.SolicitudTraslado;
 import com.SolicitudTraslado.services.SolicitudTrasladoService;
@@ -22,14 +22,14 @@ public class RutaController {
     }
 
     @PostMapping
-    public ResponseEntity<Ruta> crearRuta(@RequestBody Ruta ruta) {
-        Ruta creado = rutaService.crearRuta(ruta);
+    public ResponseEntity<RutaDTO> crearRuta(@RequestBody RutaDTO ruta) {
+        RutaDTO creado = rutaService.crearRutaDesdeDto(ruta);
         return ResponseEntity.ok(creado);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Ruta> obtenerRutaPorId(@PathVariable Long id) {
-        Ruta ruta = rutaService.obtenerRutaPorId(id);
+    public ResponseEntity<RutaDTO> obtenerRutaPorId(@PathVariable Long id) {
+        RutaDTO ruta = rutaService.obtenerRutaDtoPorId(id);
         if (ruta != null) {
             return ResponseEntity.ok(ruta);
         } else {
@@ -38,28 +38,28 @@ public class RutaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Ruta> actualizarRuta(@PathVariable Long id, @RequestBody Ruta ruta) {
+    public ResponseEntity<RutaDTO> actualizarRuta(@PathVariable Long id, @RequestBody RutaDTO ruta) {
         ruta.setId(id);
-        Ruta actualizado = rutaService.actualizarRuta(ruta);
+        RutaDTO actualizado = rutaService.actualizarRutaDesdeDto(ruta);
         return ResponseEntity.ok(actualizado);
     }
 
     @GetMapping
-    public ResponseEntity<Map<Long, Ruta>> listarRutas() {
-        Map<Long, Ruta> rutas = rutaService.listarRutas();
+    public ResponseEntity<Map<Long, RutaDTO>> listarRutas() {
+        Map<Long, RutaDTO> rutas = rutaService.listarRutasDto();
         return ResponseEntity.ok(rutas);
     }
 
     @GetMapping("/para_asignar")
-    public ResponseEntity<Map<Long, Ruta>> obtenerRutasParaAsignarASolicitud(@RequestParam Long solicitudId) {
+    public ResponseEntity<Map<Long, RutaDTO>> obtenerRutasParaAsignarASolicitud(@RequestParam Long solicitudId) {
         // Aquí se asume que existe un método para obtener la solicitud por ID
         SolicitudTraslado solicitud = solicitudTrasladoService.obtenerSolicitudPorNumero(solicitudId);
         if (solicitud == null) {
             return ResponseEntity.notFound().build();
         }
-        List<Ruta> rutas = rutaService.obtenerRutasParaAsignarASolicitud(solicitud);
-        Map<Long, Ruta> rutaMap = new HashMap<>();
-        for (Ruta ruta : rutas) {
+        List<RutaDTO> rutas = rutaService.obtenerRutasParaAsignarDto(solicitud);
+        Map<Long, RutaDTO> rutaMap = new HashMap<>();
+        for (RutaDTO ruta : rutas) {
             rutaMap.put(ruta.getId(), ruta);
         }
         return ResponseEntity.ok(rutaMap);

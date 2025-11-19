@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.SolicitudTraslado.domain.Tarifa;
+import com.SolicitudTraslado.dto.DtoMapper;
+import com.SolicitudTraslado.dto.TarifaDTO;
 import com.SolicitudTraslado.repo.TarifaRepo;
 
 @Service
@@ -34,6 +36,32 @@ public class TarifaService {
     public Tarifa obtenerTarifaPorId(Long id) {
         return tarifaRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Tarifa no encontrada con ID: " + id));
+    }
+
+    @Transactional(readOnly = true)
+    public TarifaDTO obtenerTarifaDto() {
+        return DtoMapper.toTarifaDto(obtenerTarifa());
+    }
+
+    @Transactional(readOnly = true)
+    public TarifaDTO obtenerTarifaDtoPorId(Long id) {
+        return DtoMapper.toTarifaDto(obtenerTarifaPorId(id));
+    }
+
+    @Transactional(readOnly = true)
+    public HashMap<Long, TarifaDTO> listarTarifasDto() {
+        HashMap<Long, TarifaDTO> mapa = new HashMap<>();
+        for (Tarifa tarifa : tarifaRepo.findAll()) {
+            mapa.put(tarifa.getId(), DtoMapper.toTarifaDto(tarifa));
+        }
+        return mapa;
+    }
+
+    @Transactional
+    public TarifaDTO crearTarifa(TarifaDTO tarifaDto) {
+        Tarifa tarifa = DtoMapper.toTarifaEntity(tarifaDto);
+        Tarifa guardada = crearTarifa(tarifa);
+        return DtoMapper.toTarifaDto(guardada);
     }
 
     @Transactional
@@ -65,6 +93,13 @@ public class TarifaService {
         existente.setCostoPorM3(tarifaActualizada.getCostoPorM3());
         if (todas.size() > 1) tarifaRepo.deleteAll(todas.subList(1, todas.size()));
         return tarifaRepo.save(existente);
+    }
+
+    @Transactional
+    public TarifaDTO actualizarTarifa(TarifaDTO tarifaActualizada) {
+        Tarifa tarifa = DtoMapper.toTarifaEntity(tarifaActualizada);
+        Tarifa guardada = actualizarTarifa(tarifa);
+        return DtoMapper.toTarifaDto(guardada);
     }
 
     @Transactional(readOnly = true)

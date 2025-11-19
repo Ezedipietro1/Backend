@@ -5,9 +5,16 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.SolicitudTraslado.domain.Deposito;
+import com.SolicitudTraslado.dto.DepositoDTO;
 import com.SolicitudTraslado.services.DepositoService;
 
 @RestController
@@ -21,38 +28,37 @@ public class DepositoController {
     }
 
     @GetMapping
-    public ResponseEntity<Map<Long, Deposito>> listarDepositos() {
+    public ResponseEntity<Map<Long, DepositoDTO>> listarDepositos() {
         return ResponseEntity.ok(depositoService.listarDepositos());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Deposito> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<DepositoDTO> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(depositoService.obtenerDepositoPorId(id));
     }
 
     @GetMapping("/por_ubicacion")
-    public ResponseEntity<List<Deposito>> obtenerPorUbicacion(@RequestParam("ubicacionId") Long ubicacionId) {
+    public ResponseEntity<List<DepositoDTO>> obtenerPorUbicacion(@RequestParam("ubicacionId") Long ubicacionId) {
         return ResponseEntity.ok(depositoService.obtenerDepositosPorUbicacionId(ubicacionId));
     }
 
     @GetMapping("/por_ciudad")
-    public ResponseEntity<List<Deposito>> obtenerPorCiudad(@RequestParam("ciudadId") Long ciudadId) {
+    public ResponseEntity<List<DepositoDTO>> obtenerPorCiudad(@RequestParam("ciudadId") Long ciudadId) {
         return ResponseEntity.ok(depositoService.obtenerDepositosPorCiudadId(ciudadId));
     }
 
     @PostMapping
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<Deposito> crearDeposito(@RequestBody Deposito deposito) {
-        Deposito creado = depositoService.crearDeposito(deposito);
+    public ResponseEntity<DepositoDTO> crearDeposito(@RequestBody DepositoDTO deposito) {
+        DepositoDTO creado = depositoService.crearDeposito(deposito);
         return ResponseEntity.ok(creado);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<Deposito> actualizarDeposito(@PathVariable Long id, @RequestBody Deposito deposito) {
-        // Aseguramos que el ID del path se use en el depósito
+    public ResponseEntity<DepositoDTO> actualizarDeposito(@PathVariable Long id, @RequestBody DepositoDTO deposito) {
         deposito.setId(id);
-        Deposito actualizado = depositoService.actualizarDeposito(deposito);
+        DepositoDTO actualizado = depositoService.actualizarDeposito(deposito);
         return ResponseEntity.ok(actualizado);
     }
 }

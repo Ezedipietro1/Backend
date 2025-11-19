@@ -4,7 +4,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import com.SolicitudTraslado.domain.Camion;
+import java.util.List;
+
+import com.SolicitudTraslado.dto.CamionDTO;
 import com.SolicitudTraslado.services.CamionService;
 
 @RestController
@@ -17,27 +19,27 @@ public class CamionController {
     }
 
     @GetMapping("/{dominio}")
-    public ResponseEntity<Camion> obtenerCamionPorId(@PathVariable String dominio) {
-        Camion camion = camionService.obtenerCamionPorDominio(dominio);
+    public ResponseEntity<CamionDTO> obtenerCamionPorId(@PathVariable String dominio) {
+        CamionDTO camion = camionService.obtenerCamionDetallePorDominio(dominio);
         return ResponseEntity.ok(camion);
     }
 
     @GetMapping
-    public ResponseEntity<?> listarCamiones() {
+    public ResponseEntity<List<CamionDTO>> listarCamiones() {
         return ResponseEntity.ok(camionService.listarCamiones());
     }
 
     @PostMapping
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<Camion> crearCamion(@RequestBody Camion camion) {
-        Camion nuevoCamion = camionService.crearCamion(camion);
+    public ResponseEntity<CamionDTO> crearCamion(@RequestBody CamionDTO camion) {
+        CamionDTO nuevoCamion = camionService.crearCamion(camion);
         return ResponseEntity.ok(nuevoCamion);
     }
 
     @PutMapping("/{dominio}")
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<Camion> actualizarCamion(@PathVariable String dominio, @RequestBody Camion camion) {
-        Camion camionActualizado = camionService.actualizarCamion(camion, dominio);
+    public ResponseEntity<CamionDTO> actualizarCamion(@PathVariable String dominio, @RequestBody CamionDTO camion) {
+        CamionDTO camionActualizado = camionService.actualizarCamion(camion, dominio);
         return ResponseEntity.ok(camionActualizado);
     }
 }

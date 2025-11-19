@@ -4,10 +4,13 @@ import com.SolicitudTraslado.domain.Deposito;
 import com.SolicitudTraslado.repo.DepositoRepo;
 import com.SolicitudTraslado.domain.Ubicacion;
 import com.SolicitudTraslado.repo.UbicacionRepo;
+import com.SolicitudTraslado.dto.DepositoDTO;
+import com.SolicitudTraslado.dto.DtoMapper;
 
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
@@ -24,41 +27,50 @@ public class DepositoService {
     }
 
     @Transactional
-    public Deposito crearDeposito(Deposito deposito) {
+    public DepositoDTO crearDeposito(DepositoDTO depositoDto) {
+        Deposito deposito = DtoMapper.toDepositoEntity(depositoDto);
         validarDeposito(deposito);
-        return depositoRepo.save(deposito);
+        Deposito guardado = depositoRepo.save(deposito);
+        return DtoMapper.toDepositoDto(guardado);
     }
 
     @Transactional
-    public Deposito actualizarDeposito(Deposito depositoActualizado) {
-        validarDeposito(depositoActualizado);
-        return depositoRepo.save(depositoActualizado);
+    public DepositoDTO actualizarDeposito(DepositoDTO depositoActualizado) {
+        Deposito deposito = DtoMapper.toDepositoEntity(depositoActualizado);
+        validarDeposito(deposito);
+        Deposito guardado = depositoRepo.save(deposito);
+        return DtoMapper.toDepositoDto(guardado);
     }
 
     @Transactional(readOnly = true)
-    public Map<Long, Deposito> listarDepositos() {
+    public Map<Long, DepositoDTO> listarDepositos() {
         List<Deposito> depositos = depositoRepo.findAll();
-        Map<Long, Deposito> depositoMap = new HashMap<>();
+        Map<Long, DepositoDTO> depositoMap = new HashMap<>();
         for (Deposito dep : depositos) {
-            depositoMap.put(dep.getId(), dep);
+            depositoMap.put(dep.getId(), DtoMapper.toDepositoDto(dep));
         }
         return depositoMap;
     }
 
     @Transactional(readOnly = true)
-    public List<Deposito> obtenerDepositosPorUbicacionId(Long ubicacionId) {
-        return depositoRepo.findByUbicacionId(ubicacionId);
+    public List<DepositoDTO> obtenerDepositosPorUbicacionId(Long ubicacionId) {
+        return depositoRepo.findByUbicacionId(ubicacionId).stream()
+                .map(DtoMapper::toDepositoDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public List<Deposito> obtenerDepositosPorCiudadId(Long ciudadId) {
-        return depositoRepo.findByCiudadId(ciudadId);
+    public List<DepositoDTO> obtenerDepositosPorCiudadId(Long ciudadId) {
+        return depositoRepo.findByCiudadId(ciudadId).stream()
+                .map(DtoMapper::toDepositoDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public Deposito obtenerDepositoPorId(Long id) {
-        return depositoRepo.findById(id)
+    public DepositoDTO obtenerDepositoPorId(Long id) {
+        Deposito deposito = depositoRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Depósito no encontrado con ID: " + id));
+        return DtoMapper.toDepositoDto(deposito);
     }
     
     // Validaciones para Deposito y Ubicacion

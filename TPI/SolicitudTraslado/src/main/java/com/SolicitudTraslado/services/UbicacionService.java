@@ -5,12 +5,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.SolicitudTraslado.domain.Ciudad;
 import com.SolicitudTraslado.domain.Ubicacion;
+import com.SolicitudTraslado.dto.DtoMapper;
+import com.SolicitudTraslado.dto.UbicacionDTO;
 import com.SolicitudTraslado.repo.CiudadRepo;
 import com.SolicitudTraslado.repo.UbicacionRepo;
 
@@ -28,6 +31,18 @@ public class UbicacionService {
     public Ubicacion obtenerUbicacionPorId(Long id) {
         return ubicacionRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Ubicación no encontrada con ID: " + id));
+    }
+
+    @Transactional(readOnly = true)
+    public UbicacionDTO obtenerUbicacionDtoPorId(Long id) {
+        return DtoMapper.toUbicacionDto(obtenerUbicacionPorId(id));
+    }
+
+    @Transactional
+    public UbicacionDTO crearUbicacion(UbicacionDTO ubicacionDto) {
+        Ubicacion ubicacion = DtoMapper.toUbicacionEntity(ubicacionDto);
+        Ubicacion guardada = crearUbicacion(ubicacion);
+        return DtoMapper.toUbicacionDto(guardada);
     }
 
     @Transactional
@@ -60,6 +75,13 @@ public class UbicacionService {
         return ubicacionRepo.save(ubicacionActualizada);
     }
 
+    @Transactional
+    public UbicacionDTO actualizarUbicacion(UbicacionDTO ubicacionActualizada) {
+        Ubicacion ubicacion = DtoMapper.toUbicacionEntity(ubicacionActualizada);
+        Ubicacion guardada = actualizarUbicacion(ubicacion);
+        return DtoMapper.toUbicacionDto(guardada);
+    }
+
     @Transactional(readOnly = true)
     public Map<Long, Ubicacion> listarUbicaciones() {
         List<Ubicacion> ubicaciones = ubicacionRepo.findAll();
@@ -71,8 +93,25 @@ public class UbicacionService {
     }
 
     @Transactional(readOnly = true)
+    public Map<Long, UbicacionDTO> listarUbicacionesDto() {
+        List<Ubicacion> ubicaciones = ubicacionRepo.findAll();
+        Map<Long, UbicacionDTO> ubicacionMap = new HashMap<>();
+        for (Ubicacion ub : ubicaciones) {
+            ubicacionMap.put(ub.getId(), DtoMapper.toUbicacionDto(ub));
+        }
+        return ubicacionMap;
+    }
+
+    @Transactional(readOnly = true)
     public List<Ubicacion> obtenerUbicacionesPorCiudadId(Long ciudadId) {
         return ubicacionRepo.findByCiudadId(ciudadId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UbicacionDTO> obtenerUbicacionesDtoPorCiudadId(Long ciudadId) {
+        return ubicacionRepo.findByCiudadId(ciudadId).stream()
+                .map(DtoMapper::toUbicacionDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

@@ -3,6 +3,8 @@ package com.SolicitudTraslado.services;
 import com.SolicitudTraslado.domain.Camion;
 import com.SolicitudTraslado.domain.Tramos;
 import com.SolicitudTraslado.domain.enums.TipoTramo;
+import com.SolicitudTraslado.dto.DtoMapper;
+import com.SolicitudTraslado.dto.TramoDTO;
 import com.SolicitudTraslado.repo.TramoRepo;
 import com.SolicitudTraslado.repo.CamionRepo;
 import com.SolicitudTraslado.repo.UbicacionRepo;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
 import java.util.HashMap;
 import java.sql.Date;
+import java.util.stream.Collectors;
 
 @Service
 public class TramoService {
@@ -31,9 +34,23 @@ public class TramoService {
     }
 
     @Transactional
+    public TramoDTO crearTramo(TramoDTO tramoDto) {
+        Tramos tramo = DtoMapper.toTramoEntity(tramoDto);
+        Tramos guardado = crearTramo(tramo);
+        return DtoMapper.toTramoDto(guardado);
+    }
+
+    @Transactional
     public Tramos crearTramo(Tramos tramo) {
         verificarTramo(tramo);
         return tramoRepo.save(tramo);
+    }
+
+    @Transactional
+    public TramoDTO actualizarTramo(TramoDTO tramoActualizado) {
+        Tramos tramo = DtoMapper.toTramoEntity(tramoActualizado);
+        Tramos guardado = actualizarTramo(tramo);
+        return DtoMapper.toTramoDto(guardado);
     }
 
     @Transactional
@@ -58,6 +75,11 @@ public class TramoService {
     }
 
     @Transactional
+    public TramoDTO finalizarTramoDto(Long id) {
+        return DtoMapper.toTramoDto(finalizarTramo(id));
+    }
+
+    @Transactional
     public Tramos iniciaTramos(Long id) {
         Tramos tramo = tramoRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Tramo no encontrado con id: " + id));
@@ -72,9 +94,19 @@ public class TramoService {
         return tramo;
     }
 
+    @Transactional
+    public TramoDTO iniciaTramosDto(Long id) {
+        return DtoMapper.toTramoDto(iniciaTramos(id));
+    }
+
     @Transactional(readOnly = true)
     public Tramos obtenerTramoPorId(Long id) {
         return tramoRepo.findById(id).orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public TramoDTO obtenerTramoDtoPorId(Long id) {
+        return DtoMapper.toTramoDto(obtenerTramoPorId(id));
     }
 
     @Transactional(readOnly = true)
@@ -95,11 +127,27 @@ public class TramoService {
     }
 
     @Transactional(readOnly = true)
+    public Map<Long, TramoDTO> listarTramosDto() {
+        Map<Long, TramoDTO> tramoMap = new HashMap<>();
+        for (Tramos tramo : tramoRepo.findAll()) {
+            tramoMap.put(tramo.getId(), DtoMapper.toTramoDto(tramo));
+        }
+        return tramoMap;
+    }
+
+    @Transactional(readOnly = true)
     public List<Tramos> obtenerTramosPorCamionDominio(String dominio) {
         if (dominio == null || dominio.trim().isEmpty()) {
             throw new IllegalArgumentException("Dominio del camión no puede ser null o vacío");
         }
         return tramoRepo.findByCamionDominio(dominio);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TramoDTO> obtenerTramosDtoPorCamionDominio(String dominio) {
+        return obtenerTramosPorCamionDominio(dominio).stream()
+                .map(DtoMapper::toTramoDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional

@@ -5,9 +5,15 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.SolicitudTraslado.domain.Contenedor;
+import com.SolicitudTraslado.dto.ContenedorDTO;
 import com.SolicitudTraslado.services.ContenedorService;
 
 @RestController
@@ -21,36 +27,36 @@ public class ContenedorController {
     }
 
     @GetMapping
-    public ResponseEntity<Map<Long, Contenedor>> listarContenedores() {
-        return ResponseEntity.ok(contenedorService.listarContenedores());
+    public ResponseEntity<Map<Long, ContenedorDTO>> listarContenedores() {
+        return ResponseEntity.ok(contenedorService.listarContenedoresDto());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Contenedor> obtenerPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(contenedorService.obtenerContenedorPorId(id));
+    public ResponseEntity<ContenedorDTO> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(contenedorService.obtenerContenedorDtoPorId(id));
     }
 
     @GetMapping("/en_deposito")
-    public ResponseEntity<List<Contenedor>> obtenerContenedoresEnDeposito() {
-        return ResponseEntity.ok(contenedorService.obtenerContenedoresEnDeposito());
+    public ResponseEntity<List<ContenedorDTO>> obtenerContenedoresEnDeposito() {
+        return ResponseEntity.ok(contenedorService.obtenerContenedoresEnDepositoDto());
     }
 
     @PostMapping
     @PreAuthorize("hasRole('OPERADOR') or hasRole('CLIENTE')")
-    public ResponseEntity<Contenedor> crearContenedor(@RequestBody Contenedor contenedor) {
-        Contenedor creado = contenedorService.crearContenedor(contenedor);
+    public ResponseEntity<ContenedorDTO> crearContenedor(@RequestBody ContenedorDTO contenedor) {
+        ContenedorDTO creado = contenedorService.crearContenedor(contenedor);
         return ResponseEntity.ok(creado);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<Contenedor> actualizarContenedor(@PathVariable Long id, @RequestBody Contenedor contenedor) {
-        Contenedor actualizado = contenedorService.actualizarContenedor(contenedor, id);
+    public ResponseEntity<ContenedorDTO> actualizarContenedor(@PathVariable Long id, @RequestBody ContenedorDTO contenedor) {
+        ContenedorDTO actualizado = contenedorService.actualizarContenedor(contenedor, id);
         return ResponseEntity.ok(actualizado);
     }
 
     @GetMapping("/no_entregados")
-    public ResponseEntity<List<Contenedor>> obtenerContenedoresNoEntregados() {
-        return ResponseEntity.ok(contenedorService.obtenerContenedoresNoEntregados());
+    public ResponseEntity<List<ContenedorDTO>> obtenerContenedoresNoEntregados() {
+        return ResponseEntity.ok(contenedorService.obtenerContenedoresNoEntregadosDto());
     }
 }

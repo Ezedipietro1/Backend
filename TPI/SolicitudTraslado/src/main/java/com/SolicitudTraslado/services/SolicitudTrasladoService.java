@@ -17,8 +17,24 @@ import com.SolicitudTraslado.domain.Tarifa;
 import com.SolicitudTraslado.repo.TarifaRepo;
 
 import com.SolicitudTraslado.domain.Tramos;
+import com.SolicitudTraslado.dto.DtoMapper;
+import com.SolicitudTraslado.dto.SolicitudTrasladoDTO;
 
 
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +45,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class SolicitudTrasladoService {
@@ -42,6 +61,7 @@ public class SolicitudTrasladoService {
     private final OsrmService osrmService;
     private final TramoService tramoService;
     private final CamionService camionService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public SolicitudTrasladoService(SolicitudTrasladoRepo solicitudTrasladoRepo, RutaRepo rutaRepo, ContenedorService contenedorService, TarifaRepo tarifaRepo, TarifaService tarifaService, UbicacionService ubicacionService, OsrmService osrmService, TramoService tramoService, CamionService camionService) {
         this.solicitudTrasladoRepo = solicitudTrasladoRepo;
@@ -76,12 +96,15 @@ public class SolicitudTrasladoService {
 
         EstadoSolicitud estadoInicial = EstadoSolicitud.BORRADOR;
 
-        Map<String,Object> distancia = osrmService.getDistanceDuration(origenCreada.getLatitud(), origenCreada.getLongitud(), destinoCreada.getLatitud(), destinoCreada.getLongitud());
-        Map<String,Object> duracion = osrmService.getDistanceDuration(origenCreada.getLatitud(), origenCreada.getLongitud(), destinoCreada.getLatitud(), destinoCreada.getLongitud());
+        Map<String,Object> osrmData = osrmService.getDistanceDuration(origenCreada.getLatitud(), origenCreada.getLongitud(), destinoCreada.getLatitud(), destinoCreada.getLongitud());
+        Double distanciaMetros = extraerValorOsrm(osrmData, "distanceMeters", "distancia");
+        Double duracionSegundos = extraerValorOsrm(osrmData, "durationSeconds", "duración");
 
-        Double costoEstimado = tarifaDefault.getCostoPorKm() * (Double) distancia.get("distanceMeters") + tarifaDefault.getCostoPorM3() * contenedorNuevo.getVolumen() + tarifaDefault.getCostoDeCombustible() * 1.0 * (Double) distancia.get("distanceMeters");
+        Double costoEstimado = tarifaDefault.getCostoPorKm() * distanciaMetros
+                + tarifaDefault.getCostoPorM3() * contenedorNuevo.getVolumen()
+                + tarifaDefault.getCostoDeCombustible() * distanciaMetros;
 
-        Double tiempoEstimado = (Double) duracion.get("durationSeconds") / 3600.0; // en horas
+        Double tiempoEstimado = duracionSegundos / 3600.0; // en horas
 
         SolicitudTraslado nuevaSolicitud = SolicitudTraslado.builder()
                 .clienteId(clienteNuevo.getId())
@@ -94,6 +117,12 @@ public class SolicitudTrasladoService {
                 .estado(estadoInicial)
                 .build();
         return solicitudTrasladoRepo.save(nuevaSolicitud);
+    }
+
+    @Transactional
+    public SolicitudTrasladoDTO crearSolicitudTrasladoDto(Long clienteId, String nombre, String apellido, String telefono, boolean activo, String email, Double volumen, Double peso, Long ubicacionOrigenId, Long ubicacionDestinoId) {
+        SolicitudTraslado solicitud = crearSolicitudTraslado(clienteId, nombre, apellido, telefono, activo, email, volumen, peso, ubicacionOrigenId, ubicacionDestinoId);
+        return DtoMapper.toSolicitudDto(solicitud);
     }
 
     @Transactional
@@ -114,6 +143,13 @@ public class SolicitudTrasladoService {
         return solicitudTrasladoRepo.save(solicitudActualizada);
     }
 
+    @Transactional
+    public SolicitudTrasladoDTO actualizarSolicitudTraslado(SolicitudTrasladoDTO solicitudActualizada) {
+        SolicitudTraslado solicitud = DtoMapper.toSolicitudEntity(solicitudActualizada);
+        SolicitudTraslado guardada = actualizarSolicitudTraslado(solicitud);
+        return DtoMapper.toSolicitudDto(guardada);
+    }
+
     @Transactional(readOnly = true)
     public Map<Long, SolicitudTraslado> listarSolicitudes() {
         Map<Long, SolicitudTraslado> solicitudMap = new HashMap<>();
@@ -124,9 +160,23 @@ public class SolicitudTrasladoService {
     }
 
     @Transactional(readOnly = true)
+    public Map<Long, SolicitudTrasladoDTO> listarSolicitudesDto() {
+        Map<Long, SolicitudTrasladoDTO> solicitudMap = new HashMap<>();
+        for (SolicitudTraslado solicitud : solicitudTrasladoRepo.findAll()) {
+            solicitudMap.put(solicitud.getNumero(), DtoMapper.toSolicitudDto(solicitud));
+        }
+        return solicitudMap;
+    }
+
+    @Transactional(readOnly = true)
     public SolicitudTraslado obtenerSolicitudPorNumero(Long numero) {
         return solicitudTrasladoRepo.findById(numero)
                 .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada con número: " + numero));
+    }
+
+    @Transactional(readOnly = true)
+    public SolicitudTrasladoDTO obtenerSolicitudDtoPorNumero(Long numero) {
+        return DtoMapper.toSolicitudDto(obtenerSolicitudPorNumero(numero));
     }
 
     @Transactional(readOnly = true)
@@ -140,11 +190,28 @@ public class SolicitudTrasladoService {
     }
 
     @Transactional(readOnly = true)
+    public Map<Long, SolicitudTrasladoDTO> obtenerSolicitudesDtoPorEstado(EstadoSolicitud estado) {
+        List<SolicitudTraslado> solicitudes = solicitudTrasladoRepo.findByEstado(estado);
+        Map<Long, SolicitudTrasladoDTO> solicitudMap = new HashMap<>();
+        for (SolicitudTraslado solicitud : solicitudes) {
+            solicitudMap.put(solicitud.getNumero(), DtoMapper.toSolicitudDto(solicitud));
+        }
+        return solicitudMap;
+    }
+
+    @Transactional(readOnly = true)
     public List<SolicitudTraslado> obtenerSolicitudesPorClienteId(Long clienteId) {
         if (clienteId == null) {
             throw new IllegalArgumentException("El clienteId no puede ser null");
         }
         return solicitudTrasladoRepo.findByClienteId(clienteId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SolicitudTrasladoDTO> obtenerSolicitudesDtoPorClienteId(Long clienteId) {
+        return solicitudTrasladoRepo.findByClienteId(clienteId).stream()
+                .map(DtoMapper::toSolicitudDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -232,6 +299,12 @@ public class SolicitudTrasladoService {
         return solicitud;
     }
 
+    @Transactional
+    public SolicitudTrasladoDTO finalizarSolicitudTrasladoDto(Long solicitudId) {
+        SolicitudTraslado solicitud = finalizarSolicitudTraslado(solicitudId);
+        return DtoMapper.toSolicitudDto(solicitud);
+    }
+
     // Validaciones para SolicitudTraslado
     private void validarSolicitud(SolicitudTraslado s) {
         if (s == null) {
@@ -282,6 +355,20 @@ public class SolicitudTrasladoService {
             throw new IllegalArgumentException("El estado de la solicitud es obligatorio");
         }
     }
+
+    private Double extraerValorOsrm(Map<String, Object> osrmResponse, String key, String descripcion) {
+        if (osrmResponse == null || osrmResponse.isEmpty()) {
+            throw new IllegalStateException("No se obtuvo respuesta del servicio OSRM para " + descripcion);
+        }
+        if (osrmResponse.containsKey("error")) {
+            throw new IllegalStateException("El servicio OSRM devolvió error al calcular " + descripcion + ": " + osrmResponse.get("error"));
+        }
+        Object value = osrmResponse.get(key);
+        if (!(value instanceof Number)) {
+            throw new IllegalStateException("Respuesta de OSRM inválida. No se pudo leer " + descripcion);
+        }
+        return ((Number) value).doubleValue();
+    }
     
     // --- Helpers for create flow ---
     @Value("${Cliente.service.url:http://localhost:8081}")
@@ -314,8 +401,7 @@ public class SolicitudTrasladoService {
         // Si se envió un id, verificamos existencia remota primero
         if (clienteId != null) {
             try {
-                String url = clienteServiceUrl + "/api/clientes/" + clienteId;
-                Cliente encontrado = restTemplate.getForObject(url, Cliente.class);
+                Cliente encontrado = obtenerClienteRemoto(clienteId);
                 if (encontrado != null && encontrado.getId() != null) {
                     return encontrado;
                 }
@@ -351,11 +437,11 @@ public class SolicitudTrasladoService {
             }
             payload.put("email", finalEmail);
 
-            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-            headers.set(org.springframework.http.HttpHeaders.CONTENT_TYPE, "application/json");
-            org.springframework.http.HttpEntity<java.util.Map<String, Object>> entity = new org.springframework.http.HttpEntity<>(payload, headers);
+            HttpHeaders headers = crearHeadersConToken();
+            headers.set(HttpHeaders.CONTENT_TYPE, "application/json");
+            HttpEntity<java.util.Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 
-            org.springframework.http.ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
             if (response != null && response.getStatusCode().is2xxSuccessful()) {
                 String body = response.getBody();
                 Long newId = null;
@@ -405,5 +491,69 @@ public class SolicitudTrasladoService {
             } catch (Exception ex) {
                 throw new IllegalStateException("No se pudo registrar el cliente remoto: " + ex.getMessage(), ex);
             }
+    }
+
+    private HttpHeaders crearHeadersConToken() {
+        HttpHeaders headers = new HttpHeaders();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth instanceof JwtAuthenticationToken jwtAuth) {
+            headers.setBearerAuth(jwtAuth.getToken().getTokenValue());
+        }
+        return headers;
+    }
+
+    private Cliente obtenerClienteRemoto(Long clienteId) {
+        String url = clienteServiceUrl + "/api/clientes/" + clienteId;
+        ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                new HttpEntity<>(crearHeadersConToken()),
+                String.class);
+        if (response.getStatusCode().is2xxSuccessful()) {
+            return parseClienteDesdeJson(response.getBody());
+        }
+        return null;
+    }
+
+    private Cliente parseClienteDesdeJson(String body) {
+        if (body == null || body.isBlank()) {
+            return null;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(body);
+            if (root == null || root.isNull()) {
+                return null;
+            }
+            if (root.isObject()) {
+                // Caso mapa {"1": {...}}
+                if (!root.has("id") && !root.has("idCliente") && !root.has("clienteId") && root.fields().hasNext()) {
+                    JsonNode valueNode = root.fields().next().getValue();
+                    if (valueNode.isObject()) {
+                        return construirCliente(valueNode);
+                    }
+                }
+                return construirCliente(root);
+            }
+        } catch (Exception ex) {
+            log.warn("No se pudo parsear la respuesta del servicio de clientes: {}", ex.getMessage());
+        }
+        return null;
+    }
+
+    private Cliente construirCliente(JsonNode node) {
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        Cliente cliente = new Cliente();
+        if (node.hasNonNull("idCliente")) cliente.setId(node.get("idCliente").asLong());
+        else if (node.hasNonNull("id")) cliente.setId(node.get("id").asLong());
+        else if (node.hasNonNull("clienteId")) cliente.setId(node.get("clienteId").asLong());
+
+        if (node.hasNonNull("nombre")) cliente.setNombre(node.get("nombre").asText());
+        if (node.hasNonNull("apellido")) cliente.setApellido(node.get("apellido").asText());
+        if (node.hasNonNull("telefono")) cliente.setTelefono(node.get("telefono").asText());
+        if (node.hasNonNull("email")) cliente.setEmail(node.get("email").asText());
+        if (node.hasNonNull("estado")) cliente.setActivo(node.get("estado").asBoolean());
+        return cliente;
     }
 }

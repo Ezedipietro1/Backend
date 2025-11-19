@@ -4,9 +4,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.SolicitudTraslado.domain.Ubicacion;
+import com.SolicitudTraslado.dto.UbicacionDTO;
 import com.SolicitudTraslado.services.UbicacionService;
 
 @RestController
@@ -20,31 +27,30 @@ public class UbicacionController {
     }
 
     @GetMapping
-    public ResponseEntity<Map<Long, Ubicacion>> listarUbicaciones() {
-        return ResponseEntity.ok(ubicacionService.listarUbicaciones());
+    public ResponseEntity<Map<Long, UbicacionDTO>> listarUbicaciones() {
+        return ResponseEntity.ok(ubicacionService.listarUbicacionesDto());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Ubicacion> obtenerPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(ubicacionService.obtenerUbicacionPorId(id));
+    public ResponseEntity<UbicacionDTO> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(ubicacionService.obtenerUbicacionDtoPorId(id));
     }
 
     @GetMapping("/por-ciudad")
-    public ResponseEntity<List<Ubicacion>> obtenerPorCiudad(@RequestParam("ciudadId") Long ciudadId) {
-        return ResponseEntity.ok(ubicacionService.obtenerUbicacionesPorCiudadId(ciudadId));
+    public ResponseEntity<List<UbicacionDTO>> obtenerPorCiudad(@RequestParam("ciudadId") Long ciudadId) {
+        return ResponseEntity.ok(ubicacionService.obtenerUbicacionesDtoPorCiudadId(ciudadId));
     }
 
     @PostMapping
-    public ResponseEntity<Ubicacion> crearUbicacion(@RequestBody Ubicacion ubicacion) {
-        Ubicacion creada = ubicacionService.crearUbicacion(ubicacion);
+    public ResponseEntity<UbicacionDTO> crearUbicacion(@RequestBody UbicacionDTO ubicacion) {
+        UbicacionDTO creada = ubicacionService.crearUbicacion(ubicacion);
         return ResponseEntity.ok(creada);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Ubicacion> actualizarUbicacion(@PathVariable Long id, @RequestBody Ubicacion ubicacion) {
-        // Aseguramos que el ID del path se use en la ubicación
+    public ResponseEntity<UbicacionDTO> actualizarUbicacion(@PathVariable Long id, @RequestBody UbicacionDTO ubicacion) {
         ubicacion.setId(id);
-        Ubicacion actualizada = ubicacionService.actualizarUbicacion(ubicacion);
+        UbicacionDTO actualizada = ubicacionService.actualizarUbicacion(ubicacion);
         return ResponseEntity.ok(actualizada);
     }
 }

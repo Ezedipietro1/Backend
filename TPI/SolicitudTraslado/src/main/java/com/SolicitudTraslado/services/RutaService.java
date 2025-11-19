@@ -5,6 +5,8 @@ import com.SolicitudTraslado.repo.RutaRepo;
 import com.SolicitudTraslado.repo.UbicacionRepo;
 import com.SolicitudTraslado.domain.SolicitudTraslado;
 import com.SolicitudTraslado.domain.Ubicacion;
+import com.SolicitudTraslado.dto.DtoMapper;
+import com.SolicitudTraslado.dto.RutaDTO;
 import com.SolicitudTraslado.services.UbicacionService;
 
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import java.util.Objects;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @Service
 public class RutaService {
@@ -28,11 +31,56 @@ public class RutaService {
         this.ubicacionService = ubicacionService;
     }
 
+    // ==================== MÉTODOS USADOS POR CONTROLADORES ====================
+
+    @Transactional
+    public RutaDTO crearRutaDesdeDto(RutaDTO rutaDto) {
+        Ruta ruta = DtoMapper.toRutaEntity(rutaDto);
+        Ruta guardado = crearRuta(ruta);
+        return DtoMapper.toRutaDto(guardado);
+    }
+
+    @Transactional
+    public RutaDTO actualizarRutaDesdeDto(RutaDTO rutaDto) {
+        Ruta ruta = DtoMapper.toRutaEntity(rutaDto);
+        Ruta actualizado = actualizarRuta(ruta);
+        return DtoMapper.toRutaDto(actualizado);
+    }
+
+    @Transactional(readOnly = true)
+    public RutaDTO obtenerRutaDtoPorId(Long id) {
+        return DtoMapper.toRutaDto(obtenerRutaPorId(id));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, RutaDTO> listarRutasDto() {
+        Map<Long, RutaDTO> rutaMap = new HashMap<>();
+        for (Ruta ruta : rutaRepo.findAll()) {
+            rutaMap.put(ruta.getId(), DtoMapper.toRutaDto(ruta));
+        }
+        return rutaMap;
+    }
+
+    @Transactional(readOnly = true)
+    public List<RutaDTO> obtenerRutasParaAsignarDto(SolicitudTraslado solicitud) {
+        List<Ruta> rutas = obtenerRutasParaAsignarASolicitud(solicitud);
+        if (rutas == null) {
+            return java.util.Collections.emptyList();
+        }
+        return rutas.stream().map(DtoMapper::toRutaDto).collect(Collectors.toList());
+    }
+
+    // ==================== MÉTODOS CON LÓGICA DE NEGOCIO ====================
+
     @Transactional
     public Ruta crearRuta(Ruta ruta) {
 
-        Map<String,Object> distancia = osrmService.getDistanceDuration(ruta.getOrigen().getLatitud(), ruta.getOrigen().getLongitud(), ruta.getDestino().getLatitud(), ruta.getDestino().getLongitud());
-        ruta.setDistancia((Double) distancia.get("distanceMeters"));
+        Map<String,Object> distancia = osrmService.getDistanceDuration(
+                ruta.getOrigen().getLatitud(),
+                ruta.getOrigen().getLongitud(),
+                ruta.getDestino().getLatitud(),
+                ruta.getDestino().getLongitud());
+        ruta.setDistancia(extraerDistanciaOsrm(distancia));
         
         validarRuta(ruta);
         return rutaRepo.save(ruta);
@@ -221,5 +269,22 @@ public class RutaService {
             }
         }
     }
-    
+
+    private Double extraerDistanciaOsrm(Map<String, Object> osrmResponse) {
+        if (osrmResponse == null || osrmResponse.isEmpty()) {
+            throw new IllegalStateException("No se obtuvo respuesta del servicio OSRM para la ruta");
+        }
+        if (osrmResponse.containsKey("error")) {
+            throw new IllegalStateException("Error devuelto por OSRM al calcular la ruta: " + osrmResponse.get("error"));
+        }
+        Object value = osrmResponse.get("distanceMeters");
+        if (!(value instanceof Number)) {
+            throw new IllegalStateException("Respuesta de OSRM inválida. Distancia no presente.");
+        }
+        double distance = ((Number) value).doubleValue();
+        if (distance <= 0) {
+            throw new IllegalStateException("OSRM devolvió una distancia no válida: " + distance);
+        }
+        return distance;
+    }
 }

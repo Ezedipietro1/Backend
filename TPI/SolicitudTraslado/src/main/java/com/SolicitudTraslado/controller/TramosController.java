@@ -4,7 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.SolicitudTraslado.services.TramoService;
-import com.SolicitudTraslado.domain.Tramos;
+import com.SolicitudTraslado.dto.TramoDTO;
 import java.util.Map;
 import java.util.List;
 
@@ -18,48 +18,48 @@ public class TramosController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Tramos> obtenerTramoPorId(@PathVariable Long id) {
-        Tramos tramo = tramoService.obtenerTramoPorId(id);
+    public ResponseEntity<TramoDTO> obtenerTramoPorId(@PathVariable Long id) {
+        TramoDTO tramo = tramoService.obtenerTramoDtoPorId(id);
         return ResponseEntity.ok(tramo);
     }
 
     @GetMapping
-    public ResponseEntity<Map<Long, Tramos>> listarTramos() {
-        Map<Long, Tramos> tramos = tramoService.listarTramos();
+    public ResponseEntity<Map<Long, TramoDTO>> listarTramos() {
+        Map<Long, TramoDTO> tramos = tramoService.listarTramosDto();
         return ResponseEntity.ok(tramos);
     }
 
     @PostMapping
-    public ResponseEntity<Tramos> crearTramo(@RequestBody Tramos tramo) {
-        Tramos creado = tramoService.crearTramo(tramo);
+    public ResponseEntity<TramoDTO> crearTramo(@RequestBody TramoDTO tramo) {
+        TramoDTO creado = tramoService.crearTramo(tramo);
         return ResponseEntity.ok(creado);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Tramos> actualizarTramo(@PathVariable Long id, @RequestBody Tramos tramo) {
+    public ResponseEntity<TramoDTO> actualizarTramo(@PathVariable Long id, @RequestBody TramoDTO tramo) {
         tramo.setId(id);
-        Tramos actualizado = tramoService.actualizarTramo(tramo);
+        TramoDTO actualizado = tramoService.actualizarTramo(tramo);
         return ResponseEntity.ok(actualizado);
     }
 
     @GetMapping("/{dominio}")
     @PreAuthorize("hasRole('ROLE_TRANSPORTISTA')")
-    public ResponseEntity<List<Tramos>> obtenerTramoPorDominio(@PathVariable String dominio) {
-        List<Tramos> tramo = tramoService.obtenerTramosPorCamionDominio(dominio);
+    public ResponseEntity<List<TramoDTO>> obtenerTramoPorDominio(@PathVariable String dominio) {
+        List<TramoDTO> tramo = tramoService.obtenerTramosDtoPorCamionDominio(dominio);
         return ResponseEntity.ok(tramo);
     }
 
     @PutMapping("/finalizar/{id}")
     @PreAuthorize("hasRole('ROLE_TRANSPORTISTA')")
-    public ResponseEntity<Tramos> finalizarTramo(@PathVariable Long id) {
-        Tramos finalizado = tramoService.finalizarTramo(id);
+    public ResponseEntity<TramoDTO> finalizarTramo(@PathVariable Long id) {
+        TramoDTO finalizado = tramoService.finalizarTramoDto(id);
         return ResponseEntity.ok(finalizado);
     }
 
     @PutMapping("/iniciar/{id}")
     @PreAuthorize("hasRole('ROLE_TRANSPORTISTA')")
-    public ResponseEntity<Tramos> iniciarTramo(@PathVariable Long id) {
-        Tramos iniciado = tramoService.iniciaTramos(id);
+    public ResponseEntity<TramoDTO> iniciarTramo(@PathVariable Long id) {
+        TramoDTO iniciado = tramoService.iniciaTramosDto(id);
         return ResponseEntity.ok(iniciado);
     }
 

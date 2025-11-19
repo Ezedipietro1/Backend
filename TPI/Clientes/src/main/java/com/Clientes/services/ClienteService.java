@@ -4,8 +4,6 @@ import com.Clientes.domain.Cliente;
 import com.Clientes.repo.ClienteRepository;
 
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.regex.Pattern;
 import java.util.Objects;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,13 +26,8 @@ public class ClienteService {
     }
 
     @Transactional(readOnly = true)
-    public Map<Long, Cliente> listarTodos() {
-        List<Cliente> clientes = clienteRepository.findAll();
-        Map<Long, Cliente> clienteMap = new HashMap<>();
-        for (Cliente cliente : clientes) {
-            clienteMap.put(cliente.getIdCliente(), cliente);
-        }
-        return clienteMap;
+    public List<Cliente> listarTodos() {
+        return clienteRepository.findAll();
     }
 
     public Cliente obtenerPorId(Long id) {

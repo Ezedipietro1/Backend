@@ -4,9 +4,16 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.SolicitudTraslado.domain.Ciudad;
+import com.SolicitudTraslado.dto.CiudadDTO;
 import com.SolicitudTraslado.services.CiudadService;
 
 @RestController
@@ -21,34 +28,33 @@ public class CiudadController {
 
     @GetMapping
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<List<Ciudad>> listarCiudades() {
+    public ResponseEntity<List<CiudadDTO>> listarCiudades() {
         return ResponseEntity.ok(ciudadService.listarCiudades());
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<Ciudad> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<CiudadDTO> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(ciudadService.obtenerCiudadPorId(id));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Ciudad> buscarPorNombre(@RequestParam("nombre") String nombre) {
+    public ResponseEntity<CiudadDTO> buscarPorNombre(@RequestParam("nombre") String nombre) {
         return ResponseEntity.ok(ciudadService.obtenerCiudadPorNombre(nombre));
     }
 
     @PostMapping
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<Ciudad> crearCiudad(@RequestBody Ciudad ciudad) {
-        Ciudad creada = ciudadService.crearCiudad(ciudad);
+    public ResponseEntity<CiudadDTO> crearCiudad(@RequestBody CiudadDTO ciudad) {
+        CiudadDTO creada = ciudadService.crearCiudad(ciudad);
         return ResponseEntity.ok(creada);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<Ciudad> actualizarCiudad(@PathVariable Long id, @RequestBody Ciudad ciudad) {
-        // Aseguramos que el ID del path se use en la ciudad
+    public ResponseEntity<CiudadDTO> actualizarCiudad(@PathVariable Long id, @RequestBody CiudadDTO ciudad) {
         ciudad.setId(id);
-        Ciudad actualizada = ciudadService.actualizarCiudad(ciudad);
+        CiudadDTO actualizada = ciudadService.actualizarCiudad(ciudad);
         return ResponseEntity.ok(actualizada);
     }
 }
