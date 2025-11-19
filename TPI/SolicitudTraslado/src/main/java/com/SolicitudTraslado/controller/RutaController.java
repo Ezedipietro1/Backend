@@ -1,6 +1,7 @@
 package com.SolicitudTraslado.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.SolicitudTraslado.dto.RutaDTO;
 import com.SolicitudTraslado.services.RutaService;
@@ -22,6 +23,7 @@ public class RutaController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<RutaDTO> crearRuta(@RequestBody RutaDTO ruta) {
         RutaDTO creado = rutaService.crearRutaDesdeDto(ruta);
         return ResponseEntity.ok(creado);

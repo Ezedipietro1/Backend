@@ -100,9 +100,9 @@ public class SolicitudTrasladoService {
         Double distanciaMetros = extraerValorOsrm(osrmData, "distanceMeters", "distancia");
         Double duracionSegundos = extraerValorOsrm(osrmData, "durationSeconds", "duración");
 
-        Double costoEstimado = tarifaDefault.getCostoPorKm() * distanciaMetros
+        Double costoEstimado = tarifaDefault.getCostoPorKm() * distanciaMetros / 1000
                 + tarifaDefault.getCostoPorM3() * contenedorNuevo.getVolumen()
-                + tarifaDefault.getCostoDeCombustible() * distanciaMetros;
+                + tarifaDefault.getCostoDeCombustible() * distanciaMetros / 1000;
 
         Double tiempoEstimado = duracionSegundos / 3600.0; // en horas
 

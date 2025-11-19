@@ -21,7 +21,7 @@ public class OsrmService {
     private final ObjectMapper mapper = new ObjectMapper();
     private final Logger log = LoggerFactory.getLogger(OsrmService.class);
 
-    @Value("${osrm.base-url:http://localhost:5000}")
+    @Value("${osrm.base-url:http://osrm:5000}")
     private String osrmBaseUrl;
 
     /**
