@@ -19,12 +19,14 @@ public class CamionController {
     }
 
     @GetMapping("/{dominio}")
+    @PreAuthorize("hasRole('TRANSPORTISTA') or hasRole('OPERADOR')")
     public ResponseEntity<CamionDTO> obtenerCamionPorId(@PathVariable String dominio) {
         CamionDTO camion = camionService.obtenerCamionDetallePorDominio(dominio);
         return ResponseEntity.ok(camion);
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<List<CamionDTO>> listarCamiones() {
         return ResponseEntity.ok(camionService.listarCamiones());
     }

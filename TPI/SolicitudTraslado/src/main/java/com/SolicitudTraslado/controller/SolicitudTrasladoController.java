@@ -51,6 +51,7 @@ public class SolicitudTrasladoController {
     }
 
     @GetMapping("/{numero}")
+    @PreAuthorize("hasRole('CLIENTE') or hasRole('OPERADOR')")
     public ResponseEntity<SolicitudTrasladoDTO> obtenerPorId(@PathVariable Long numero) {
         SolicitudTrasladoDTO solicitud = solicitudTrasladoService.obtenerSolicitudDtoPorNumero(numero);
         if (solicitud != null) {
@@ -61,12 +62,14 @@ public class SolicitudTrasladoController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<Map<Long, SolicitudTrasladoDTO>> listarSolicitudes() {
         Map<Long, SolicitudTrasladoDTO> solicitudes = solicitudTrasladoService.listarSolicitudesDto();
         return ResponseEntity.ok(solicitudes);
     }
 
     @PutMapping("/{numero}")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<SolicitudTrasladoDTO> actualizar(@PathVariable Long numero,
             @RequestBody SolicitudTrasladoDTO solicitud) {
         solicitud.setNumero(numero);
@@ -88,19 +91,20 @@ public class SolicitudTrasladoController {
 
     @PutMapping("/{numero}/asignarCamionATramo")
     @PreAuthorize("hasRole('OPERADOR')")
-    public ResponseEntity<Void> asignarCamionATramo(
+    public ResponseEntity<Map<String, String>> asignarCamionATramo(
             @PathVariable Long numero,
             @RequestParam Long tramoId,
             @RequestParam String dominioCamion) {
         try {
             solicitudTrasladoService.asignarCamionATramo(numero, tramoId, dominioCamion);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(java.util.Collections.singletonMap("mensaje", "Camión asignado al tramo correctamente"));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(java.util.Collections.singletonMap("error", e.getMessage()));
         }
     }
 
     @PutMapping("/{numero}/finalizarSolicitud")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<SolicitudTrasladoDTO> finalizarSolicitud(@PathVariable Long numero) {
         try {
             SolicitudTrasladoDTO finalizada = solicitudTrasladoService.finalizarSolicitudTrasladoDto(numero);

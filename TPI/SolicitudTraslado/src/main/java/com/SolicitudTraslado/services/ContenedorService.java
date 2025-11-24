@@ -91,10 +91,24 @@ public class ContenedorService {
         Contenedor contenedorExistente = contenedorRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Contenedor no encontrado con id: " + id));
 
-        // validamos los datos del contenedor
-        validarContenedor(contenedor);
+        // Copiamos los campos que pueden actualizarse
+        contenedorExistente.setVolumen(contenedor.getVolumen());
+        contenedorExistente.setPeso(contenedor.getPeso());
+        contenedorExistente.setEstadoContenedor(contenedor.getEstadoContenedor());
+
+        // validamos los datos del contenedor actualizado
+        validarContenedor(contenedorExistente);
 
         return contenedorRepo.save(contenedorExistente);
+    }
+
+    @Transactional
+    public Contenedor actualizarEstadoContenedor(Long id, EstadoContenedor estado) {
+        Contenedor contenedor = contenedorRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Contenedor no encontrado con id: " + id));
+        contenedor.setEstadoContenedor(estado);
+        validarEstadoContenedor(estado);
+        return contenedorRepo.save(contenedor);
     }
 
     // servicio para listar todos los contenedores en un mapa con su id como clave

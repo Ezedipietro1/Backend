@@ -4,6 +4,7 @@ import java.util.Set;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.EqualsAndHashCode;
 import java.util.LinkedHashSet;
 
 @Data
@@ -11,10 +12,12 @@ import java.util.LinkedHashSet;
 @NoArgsConstructor
 @Entity
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "rutas")
 public class Ruta {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)

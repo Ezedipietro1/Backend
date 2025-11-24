@@ -27,16 +27,19 @@ public class ContenedorController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<Map<Long, ContenedorDTO>> listarContenedores() {
         return ResponseEntity.ok(contenedorService.listarContenedoresDto());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('OPERADOR') or hasRole('CLIENTE')")
     public ResponseEntity<ContenedorDTO> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(contenedorService.obtenerContenedorDtoPorId(id));
     }
 
     @GetMapping("/en_deposito")
+    @PreAuthorize("hasRole('OPERADOR') or hasRole('CLIENTE')")
     public ResponseEntity<List<ContenedorDTO>> obtenerContenedoresEnDeposito() {
         return ResponseEntity.ok(contenedorService.obtenerContenedoresEnDepositoDto());
     }
@@ -49,13 +52,14 @@ public class ContenedorController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('OPERADOR')")
+    @PreAuthorize("hasRole('OPERADOR') or hasRole('CLIENTE')")
     public ResponseEntity<ContenedorDTO> actualizarContenedor(@PathVariable Long id, @RequestBody ContenedorDTO contenedor) {
         ContenedorDTO actualizado = contenedorService.actualizarContenedor(contenedor, id);
         return ResponseEntity.ok(actualizado);
     }
 
     @GetMapping("/no_entregados")
+    @PreAuthorize("hasRole('OPERADOR') or hasRole('CLIENTE')")
     public ResponseEntity<List<ContenedorDTO>> obtenerContenedoresNoEntregados() {
         return ResponseEntity.ok(contenedorService.obtenerContenedoresNoEntregadosDto());
     }

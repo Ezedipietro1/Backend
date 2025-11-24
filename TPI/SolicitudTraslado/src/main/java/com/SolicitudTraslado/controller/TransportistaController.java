@@ -28,6 +28,7 @@ public class TransportistaController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<List<TransportistaDTO>> listarTransportistas() {
         List<TransportistaDTO> transportistas = transportistaService.listarTransportistas().stream()
                 .map(DtoMapper::toTransportistaDto)
@@ -36,6 +37,7 @@ public class TransportistaController {
     }
 
     @GetMapping("/{dni}")
+    @PreAuthorize("hasRole('OPERADOR') or hasRole('TRANSPORTISTA')")
     public ResponseEntity<TransportistaDTO> obtenerTransportistaPorDni(@PathVariable String dni) {
         return ResponseEntity.ok(DtoMapper.toTransportistaDto(transportistaService.obtenerTransportistaPorDni(dni)));
     }

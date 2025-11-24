@@ -1,4 +1,4 @@
-package com.Gateway.Gateway.config;
+package com.Gateway.Gateway.Config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

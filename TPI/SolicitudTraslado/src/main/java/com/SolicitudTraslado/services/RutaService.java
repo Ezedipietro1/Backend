@@ -1,12 +1,18 @@
 package com.SolicitudTraslado.services;
 
 import com.SolicitudTraslado.domain.Ruta;
-import com.SolicitudTraslado.repo.RutaRepo;
-import com.SolicitudTraslado.repo.UbicacionRepo;
 import com.SolicitudTraslado.domain.SolicitudTraslado;
+import com.SolicitudTraslado.domain.Tramos;
 import com.SolicitudTraslado.domain.Ubicacion;
+import com.SolicitudTraslado.domain.Deposito;
+import com.SolicitudTraslado.domain.enums.EstadoTramo;
+import com.SolicitudTraslado.domain.enums.TipoTramo;
 import com.SolicitudTraslado.dto.DtoMapper;
 import com.SolicitudTraslado.dto.RutaDTO;
+import com.SolicitudTraslado.repo.DepositoRepo;
+import com.SolicitudTraslado.repo.RutaRepo;
+import com.SolicitudTraslado.repo.SolicitudTrasladoRepo;
+import com.SolicitudTraslado.repo.UbicacionRepo;
 import com.SolicitudTraslado.services.UbicacionService;
 
 import org.springframework.stereotype.Service;
@@ -15,6 +21,7 @@ import java.util.Objects;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,12 +30,16 @@ public class RutaService {
     private final UbicacionRepo ubicacionRepo;
     private final OsrmService osrmService;
     private final UbicacionService ubicacionService;
+    private final DepositoRepo depositoRepo;
+    private final SolicitudTrasladoRepo solicitudTrasladoRepo;
 
-    public RutaService(RutaRepo rutaRepo, UbicacionRepo ubicacionRepo, OsrmService osrmService, UbicacionService ubicacionService) {
+    public RutaService(RutaRepo rutaRepo, UbicacionRepo ubicacionRepo, OsrmService osrmService, UbicacionService ubicacionService, DepositoRepo depositoRepo, SolicitudTrasladoRepo solicitudTrasladoRepo) {
         this.rutaRepo = rutaRepo;
         this.ubicacionRepo = ubicacionRepo;
         this.osrmService = osrmService;
         this.ubicacionService = ubicacionService;
+        this.depositoRepo = depositoRepo;
+        this.solicitudTrasladoRepo = solicitudTrasladoRepo;
     }
 
     // ==================== MÉTODOS USADOS POR CONTROLADORES ====================
@@ -61,7 +72,7 @@ public class RutaService {
         return rutaMap;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<RutaDTO> obtenerRutasParaAsignarDto(SolicitudTraslado solicitud) {
         List<Ruta> rutas = obtenerRutasParaAsignarASolicitud(solicitud);
         if (rutas == null) {
@@ -75,13 +86,34 @@ public class RutaService {
     @Transactional
     public Ruta crearRuta(Ruta ruta) {
 
-        Map<String,Object> distancia = osrmService.getDistanceDuration(
-                ruta.getOrigen().getLatitud(),
-                ruta.getOrigen().getLongitud(),
-                ruta.getDestino().getLatitud(),
-                ruta.getDestino().getLongitud());
-        ruta.setDistancia(extraerDistanciaOsrm(distancia));
-        
+        hidratarUbicaciones(ruta);
+
+        if (ruta.getCantTramos() == null || ruta.getCantTramos() <= 0) {
+            ruta.setCantTramos(1);
+        }
+        if (ruta.getAsignada() == null) {
+            ruta.setAsignada(false);
+        }
+
+        try {
+            Map<String,Object> distancia = osrmService.getDistanceDuration(
+                    ruta.getOrigen().getLatitud(),
+                    ruta.getOrigen().getLongitud(),
+                    ruta.getDestino().getLatitud(),
+                    ruta.getDestino().getLongitud());
+            ruta.setDistancia(extraerDistanciaOsrm(distancia));
+        } catch (Exception ex) {
+            // Si OSRM no responde, calculamos una distancia aproximada para no romper el flujo
+            Double aprox = calcularDistanciaHaversineMetros(
+                    ruta.getOrigen().getLatitud(),
+                    ruta.getOrigen().getLongitud(),
+                    ruta.getDestino().getLatitud(),
+                    ruta.getDestino().getLongitud());
+            ruta.setDistancia(aprox);
+        }
+
+        prepararTramos(ruta);
+
         validarRuta(ruta);
         return rutaRepo.save(ruta);
     }
@@ -130,17 +162,27 @@ public class RutaService {
         return rutaRepo.findByOrigenIdAndDestinoId(origenId, destinoId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<Ruta> obtenerRutasParaAsignarASolicitud(SolicitudTraslado solicitudTraslado) {
-        List<Ruta> rutas = this.crearRutasParaSolicitud(solicitudTraslado);
+        if (solicitudTraslado == null || solicitudTraslado.getNumero() == null) {
+            throw new IllegalArgumentException("Solicitud no puede ser null");
+        }
+        // Refrescamos la solicitud dentro de esta transacción para evitar problemas de lazy loading
+        SolicitudTraslado solicitud = solicitudTrasladoRepo.findById(solicitudTraslado.getNumero())
+                .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada"));
+
+        List<Ruta> rutas = rutaRepo.findBySolicitudNumero(solicitudTraslado.getNumero());
+        if (rutas == null || rutas.isEmpty()) {
+            rutas = this.crearRutasParaSolicitud(solicitud);
+        }
         if (rutas == null || rutas.isEmpty()) return rutas;
 
         // Obtener tarifa y contenedor asociados a la solicitud (si están disponibles)
         com.SolicitudTraslado.domain.Tarifa tarifa = null;
         com.SolicitudTraslado.domain.Contenedor cont = null;
-        if (solicitudTraslado != null) {
-            tarifa = solicitudTraslado.getTarifa();
-            cont = solicitudTraslado.getContenedor();
+        if (solicitud != null) {
+            tarifa = solicitud.getTarifa();
+            cont = solicitud.getContenedor();
         }
 
         for (Ruta ruta : rutas) {
@@ -190,14 +232,7 @@ public class RutaService {
         creadas.add(directa);
 
         // 2) Intentar generar una alternativa via una ubicacion intermedia (si existe)
-        java.util.Map<Long, Ubicacion> todas = ubicacionService.listarUbicaciones();
-        Ubicacion intermedia = null;
-        for (Ubicacion u : todas.values()) {
-            if (!u.getId().equals(origen.getId()) && !u.getId().equals(destino.getId())) {
-                intermedia = u;
-                break;
-            }
-        }
+        Ubicacion intermedia = buscarUbicacionIntermediaConDeposito(origen.getId(), destino.getId());
 
         if (intermedia != null) {
             // Ruta alternativa que conceptualmente tiene 2 tramos (origen->intermedia->destino)
@@ -216,6 +251,76 @@ public class RutaService {
     }
 
     
+    private void prepararTramos(Ruta ruta) {
+        if (ruta.getTramos() != null && !ruta.getTramos().isEmpty()) {
+            for (Tramos tramo : ruta.getTramos()) {
+                tramo.setRuta(ruta);
+                if (tramo.getEstadoTramo() == null) {
+                    tramo.setEstadoTramo(EstadoTramo.PENDIENTE);
+                }
+                if (tramo.getTipoTramo() == null) {
+                    tramo.setTipoTramo(TipoTramo.FINAL);
+                }
+            }
+            ruta.setCantTramos(ruta.getTramos().size());
+            return;
+        }
+
+        Deposito origenDep = obtenerDepositoPorUbicacion(ruta.getOrigen().getId());
+        Deposito destinoDep = obtenerDepositoPorUbicacion(ruta.getDestino().getId());
+        LinkedHashSet<Tramos> nuevos = new LinkedHashSet<>();
+
+        if (ruta.getCantTramos() != null && ruta.getCantTramos() > 1) {
+            Ubicacion intermedia = buscarUbicacionIntermediaConDeposito(ruta.getOrigen().getId(), ruta.getDestino().getId());
+            if (intermedia != null) {
+                Deposito interDep = obtenerDepositoPorUbicacion(intermedia.getId());
+                nuevos.add(crearTramo(origenDep, interDep, ruta, TipoTramo.INICIAL));
+                nuevos.add(crearTramo(interDep, destinoDep, ruta, TipoTramo.FINAL));
+            }
+        }
+
+        if (nuevos.isEmpty()) {
+            nuevos.add(crearTramo(origenDep, destinoDep, ruta, TipoTramo.FINAL));
+        }
+
+        ruta.setTramos(nuevos);
+        ruta.setCantTramos(nuevos.size());
+    }
+
+    private Tramos crearTramo(Deposito origen, Deposito destino, Ruta ruta, TipoTramo tipoTramo) {
+        return Tramos.builder()
+                .origen(origen)
+                .destino(destino)
+                .ruta(ruta)
+                .tipoTramo(tipoTramo)
+                .estadoTramo(EstadoTramo.PENDIENTE)
+                .build();
+    }
+
+    private Deposito obtenerDepositoPorUbicacion(Long ubicacionId) {
+        java.util.Optional<Deposito> existente = depositoRepo.findByUbicacionId(ubicacionId).stream().findFirst();
+        if (existente.isPresent()) {
+            return existente.get();
+        }
+        // Si no existe un depósito asociado, creamos uno mínimo para no bloquear la generación de tramos
+        Ubicacion ubicacion = ubicacionRepo.findById(ubicacionId)
+                .orElseThrow(() -> new IllegalArgumentException("Ubicación no encontrada para crear depósito (id " + ubicacionId + ")"));
+        Deposito nuevo = Deposito.builder()
+                .ubicacion(ubicacion)
+                .nombre("Depósito auto " + ubicacionId)
+                .costoEstadia(1.0)
+                .build();
+        return depositoRepo.save(nuevo);
+    }
+
+    private Ubicacion buscarUbicacionIntermediaConDeposito(Long origenId, Long destinoId) {
+        return ubicacionService.listarUbicaciones().values().stream()
+                .filter(u -> u.getId() != null && !u.getId().equals(origenId) && !u.getId().equals(destinoId))
+                .filter(u -> depositoRepo.findByUbicacionId(u.getId()) != null && !depositoRepo.findByUbicacionId(u.getId()).isEmpty())
+                .findFirst()
+                .orElse(null);
+    }
+
     // Validaciones para Ruta
     private void validarRuta(Ruta r) {
         if (r == null) {
@@ -260,12 +365,18 @@ public class RutaService {
             throw new IllegalArgumentException("El campo 'asignada' es obligatorio");
         }
 
-        // Evitar duplicados: si existe otra ruta con mismo origen y destino, y no es la misma ruta, impedirla
-        java.util.List<Ruta> existentes = rutaRepo.findByOrigenIdAndDestinoId(origenId, destinoId);
+        // Evitar duplicados inútiles: misma solicitud, mismo origen/destino y misma cantidad de tramos
+        List<Ruta> existentes = rutaRepo.findByOrigenIdAndDestinoId(origenId, destinoId);
         if (existentes != null && !existentes.isEmpty()) {
-            boolean otro = existentes.stream().anyMatch(rt -> r.getId() == null || !rt.getId().equals(r.getId()));
+            boolean otro = existentes.stream().anyMatch(rt -> {
+                boolean diferenteId = r.getId() == null || !rt.getId().equals(r.getId());
+                boolean mismaSolicitud = rt.getSolicitud() != null && r.getSolicitud() != null
+                        && Objects.equals(rt.getSolicitud().getNumero(), r.getSolicitud().getNumero());
+                boolean mismaCantidadTramos = Objects.equals(rt.getCantTramos(), r.getCantTramos());
+                return diferenteId && mismaSolicitud && mismaCantidadTramos;
+            });
             if (otro) {
-                throw new IllegalArgumentException("Ya existe una ruta con el mismo origen y destino");
+                throw new IllegalArgumentException("Ya existe una ruta con el mismo origen y destino para la misma solicitud");
             }
         }
     }
@@ -286,5 +397,37 @@ public class RutaService {
             throw new IllegalStateException("OSRM devolvió una distancia no válida: " + distance);
         }
         return distance;
+    }
+
+    /**
+     * Cálculo aproximado de distancia en metros usando la fórmula de Haversine,
+     * para evitar fallar si OSRM no está disponible.
+     */
+    private Double calcularDistanciaHaversineMetros(Double lat1, Double lon1, Double lat2, Double lon2) {
+        if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
+            return 1d;
+        }
+        double R = 6371000d; // radio terrestre en metros
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distancia = R * c;
+        // Evitar 0 para pasar validación
+        return distancia > 0 ? distancia : 1d;
+    }
+
+    private void hidratarUbicaciones(Ruta ruta) {
+        if (ruta == null || ruta.getOrigen() == null || ruta.getDestino() == null) {
+            throw new IllegalArgumentException("Origen y destino son obligatorios para calcular la ruta");
+        }
+        Ubicacion origen = ubicacionRepo.findById(ruta.getOrigen().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Ubicación origen no encontrada"));
+        Ubicacion destino = ubicacionRepo.findById(ruta.getDestino().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Ubicación destino no encontrada"));
+        ruta.setOrigen(origen);
+        ruta.setDestino(destino);
     }
 }

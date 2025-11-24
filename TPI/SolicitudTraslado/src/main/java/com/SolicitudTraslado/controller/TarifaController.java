@@ -20,11 +20,13 @@ public class TarifaController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<HashMap<Long, TarifaDTO>> listarTarifas() {
         return ResponseEntity.ok(tarifaService.listarTarifasDto());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('OPERADOR') or hasRole('CLIENTE')")
     public ResponseEntity<TarifaDTO> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(tarifaService.obtenerTarifaDtoPorId(id));
     }
@@ -46,12 +48,14 @@ public class TarifaController {
 
     // Endpoints para la tarifa única (actual)
     @GetMapping("/current")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<TarifaDTO> getTarifaActual() {
         TarifaDTO t = tarifaService.obtenerTarifaDto();
         return ResponseEntity.ok(t);
     }
 
     @PutMapping("/current")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<TarifaDTO> updateTarifaActual(@RequestBody TarifaDTO tarifa) {
         TarifaDTO actualizado = tarifaService.actualizarTarifa(tarifa);
         return ResponseEntity.ok(actualizado);

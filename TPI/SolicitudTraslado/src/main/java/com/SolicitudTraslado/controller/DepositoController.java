@@ -28,21 +28,25 @@ public class DepositoController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<Map<Long, DepositoDTO>> listarDepositos() {
         return ResponseEntity.ok(depositoService.listarDepositos());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<DepositoDTO> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(depositoService.obtenerDepositoPorId(id));
     }
 
     @GetMapping("/por_ubicacion")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<List<DepositoDTO>> obtenerPorUbicacion(@RequestParam("ubicacionId") Long ubicacionId) {
         return ResponseEntity.ok(depositoService.obtenerDepositosPorUbicacionId(ubicacionId));
     }
 
     @GetMapping("/por_ciudad")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<List<DepositoDTO>> obtenerPorCiudad(@RequestParam("ciudadId") Long ciudadId) {
         return ResponseEntity.ok(depositoService.obtenerDepositosPorCiudadId(ciudadId));
     }

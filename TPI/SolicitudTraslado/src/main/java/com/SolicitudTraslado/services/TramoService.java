@@ -2,6 +2,7 @@ package com.SolicitudTraslado.services;
 
 import com.SolicitudTraslado.domain.Camion;
 import com.SolicitudTraslado.domain.Tramos;
+import com.SolicitudTraslado.domain.enums.EstadoContenedor;
 import com.SolicitudTraslado.domain.enums.TipoTramo;
 import com.SolicitudTraslado.dto.DtoMapper;
 import com.SolicitudTraslado.dto.TramoDTO;
@@ -9,6 +10,7 @@ import com.SolicitudTraslado.repo.TramoRepo;
 import com.SolicitudTraslado.repo.CamionRepo;
 import com.SolicitudTraslado.repo.UbicacionRepo;
 import com.SolicitudTraslado.repo.RutaRepo;
+import com.SolicitudTraslado.repo.ContenedorRepo;
 import java.util.Objects;
 import java.util.List;
 
@@ -25,12 +27,14 @@ public class TramoService {
     private final CamionRepo camionRepo;
     private final UbicacionRepo ubicacionRepo;
     private final RutaRepo rutaRepo;
+    private final ContenedorRepo contenedorRepo;
 
-    public TramoService(TramoRepo tramoRepo, CamionRepo camionRepo, UbicacionRepo ubicacionRepo, RutaRepo rutaRepo) {
+    public TramoService(TramoRepo tramoRepo, CamionRepo camionRepo, UbicacionRepo ubicacionRepo, RutaRepo rutaRepo, ContenedorRepo contenedorRepo) {
         this.tramoRepo = tramoRepo;
         this.camionRepo = camionRepo;
         this.ubicacionRepo = ubicacionRepo;
         this.rutaRepo = rutaRepo;
+        this.contenedorRepo = contenedorRepo;
     }
 
     @Transactional
@@ -68,6 +72,10 @@ public class TramoService {
             throw new IllegalArgumentException("El tramo ya ha sido finalizado");
         }
 
+        // Si nunca se marcó fecha de inicio, la seteamos ahora para poder calcular duración (al menos 0)
+        if (tramo.getFechaInicio() == null) {
+            tramo.setFechaInicio(new Date(System.currentTimeMillis()));
+        }
         tramo.setFechaFin(new Date(System.currentTimeMillis()));
         tramo.setEstadoTramo(com.SolicitudTraslado.domain.enums.EstadoTramo.COMPLETADO);
         tramoRepo.save(tramo);
@@ -91,12 +99,30 @@ public class TramoService {
         tramo.setFechaInicio(new Date(System.currentTimeMillis()));
         tramo.setEstadoTramo(com.SolicitudTraslado.domain.enums.EstadoTramo.EN_PROGRESO);
         tramoRepo.save(tramo);
+        actualizarEstadoContenedorEnViaje(tramo);
         return tramo;
     }
 
     @Transactional
     public TramoDTO iniciaTramosDto(Long id) {
         return DtoMapper.toTramoDto(iniciaTramos(id));
+    }
+
+    private void actualizarEstadoContenedorEnViaje(Tramos tramo) {
+        if (tramo == null || tramo.getRuta() == null || tramo.getRuta().getId() == null) {
+            return;
+        }
+        // Recuperar ruta con la solicitud asociada
+        com.SolicitudTraslado.domain.Ruta ruta = rutaRepo.findById(tramo.getRuta().getId()).orElse(null);
+        if (ruta == null || ruta.getSolicitud() == null || ruta.getSolicitud().getContenedor() == null) {
+            return;
+        }
+        Long contenedorId = ruta.getSolicitud().getContenedor().getId();
+        if (contenedorId == null) return;
+        contenedorRepo.findById(contenedorId).ifPresent(c -> {
+            c.setEstadoContenedor(EstadoContenedor.EN_VIAJE);
+            contenedorRepo.save(c);
+        });
     }
 
     @Transactional(readOnly = true)
@@ -174,12 +200,15 @@ public class TramoService {
             throw new IllegalArgumentException("Tramo no puede ser null");
         }
 
-        // Camion: obligatorio y debe existir
-        if (t.getCamion() == null || t.getCamion().getDominio() == null || t.getCamion().getDominio().trim().isEmpty()) {
-            throw new IllegalArgumentException("El camión del tramo es obligatorio y debe tener dominio");
+        // Camion: si viene informado, debe existir
+        if (t.getCamion() != null) {
+            if (t.getCamion().getDominio() == null || t.getCamion().getDominio().trim().isEmpty()) {
+                throw new IllegalArgumentException("El camión informado para el tramo debe tener dominio");
+            }
+            String dominio = t.getCamion().getDominio();
+            camionRepo.findById(dominio)
+                    .orElseThrow(() -> new IllegalArgumentException("Camión no encontrado con dominio: " + dominio));
         }
-        String dominio = t.getCamion().getDominio();
-        camionRepo.findById(dominio).orElseThrow(() -> new IllegalArgumentException("Camión no encontrado con dominio: " + dominio));
 
         // Origen y destino: obligatorios y deben existir
         if (t.getOrigen() == null || t.getOrigen().getId() == null) {
@@ -193,15 +222,14 @@ public class TramoService {
         ubicacionRepo.findById(Objects.requireNonNull(t.getDestino().getId())).orElseThrow(() -> new IllegalArgumentException("Ubicación destino no encontrada"));
 
         // Fechas: fechaInicio obligatorio; si fechaFin existe debe ser posterior o igual
-        if (t.getFechaInicio() == null) {
-            throw new IllegalArgumentException("La fecha de inicio es obligatoria");
-        }
-        if (t.getFechaFin() != null) {
+        if (t.getFechaFin() != null && t.getFechaInicio() != null) {
             java.sql.Date inicio = t.getFechaInicio();
             java.sql.Date fin = t.getFechaFin();
             if (fin.before(inicio)) {
                 throw new IllegalArgumentException("La fecha fin no puede ser anterior a la fecha de inicio");
             }
+        } else if (t.getFechaFin() != null) {
+            throw new IllegalArgumentException("La fecha fin no puede existir sin fecha de inicio");
         }
 
         // Ruta: obligatoria y debe existir

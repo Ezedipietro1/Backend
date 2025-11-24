@@ -9,6 +9,7 @@ import com.SolicitudTraslado.domain.Camion;
 import com.SolicitudTraslado.domain.Cliente;
 
 import com.SolicitudTraslado.domain.Contenedor;
+import com.SolicitudTraslado.domain.enums.EstadoContenedor;
 
 import com.SolicitudTraslado.repo.RutaRepo;
 import com.SolicitudTraslado.domain.Ruta;
@@ -82,6 +83,7 @@ public class SolicitudTrasladoService {
         Contenedor contenedorNuevo = new Contenedor();
         contenedorNuevo.setVolumen(volumen);
         contenedorNuevo.setPeso(peso);
+        contenedorNuevo.setEstadoContenedor(EstadoContenedor.EN_ESPERA_RETIRO);
         contenedorNuevo = contenedorService.crearContenedor(contenedorNuevo);
 
         Cliente clienteNuevo = registrarClienteSiNecesario(clienteId, nombre, apellido, telefono, activo, email);
@@ -96,9 +98,17 @@ public class SolicitudTrasladoService {
 
         EstadoSolicitud estadoInicial = EstadoSolicitud.BORRADOR;
 
-        Map<String,Object> osrmData = osrmService.getDistanceDuration(origenCreada.getLatitud(), origenCreada.getLongitud(), destinoCreada.getLatitud(), destinoCreada.getLongitud());
-        Double distanciaMetros = extraerValorOsrm(osrmData, "distanceMeters", "distancia");
-        Double duracionSegundos = extraerValorOsrm(osrmData, "durationSeconds", "duración");
+        Double distanciaMetros;
+        Double duracionSegundos;
+        try {
+            Map<String,Object> osrmData = osrmService.getDistanceDuration(origenCreada.getLatitud(), origenCreada.getLongitud(), destinoCreada.getLatitud(), destinoCreada.getLongitud());
+            distanciaMetros = extraerValorOsrm(osrmData, "distanceMeters", "distancia");
+            duracionSegundos = extraerValorOsrm(osrmData, "durationSeconds", "duración");
+        } catch (Exception ex) {
+            log.warn("No se pudo obtener distancia/tiempo desde OSRM, se usan valores por defecto. Causa: {}", ex.getMessage());
+            distanciaMetros = 0d;
+            duracionSegundos = 0d;
+        }
 
         Double costoEstimado = tarifaDefault.getCostoPorKm() * distanciaMetros / 1000
                 + tarifaDefault.getCostoPorM3() * contenedorNuevo.getVolumen()
@@ -256,12 +266,20 @@ public class SolicitudTrasladoService {
         Ruta ruta = solicitud.getRuta();
         double tiempoRealHoras = 0.0;
         if (ruta != null && ruta.getTramos() != null) {
+            java.util.List<Tramos> tramosActualizados = new java.util.ArrayList<>();
+
             for (Tramos tramo : ruta.getTramos()) {
                 // Intentar finalizar tramo mediante el servicio (maneja validaciones)
                 try {
+                    Tramos actualizado = tramo;
                     if (tramo.getFechaFin() == null) {
-                        tramoService.finalizarTramo(tramo.getId());
-                        // recargar tramo para obtener fechas
+                        actualizado = tramoService.finalizarTramo(tramo.getId());
+                    } else {
+                        // refrescamos para tener fechas y estado consistentes
+                        actualizado = tramoService.obtenerTramoPorId(tramo.getId());
+                    }
+                    if (actualizado != null) {
+                        tramosActualizados.add(actualizado);
                     }
                 } catch (Exception ex) {
                     // no queremos abortar todo por un fallo en un tramo; registramos y seguimos
@@ -270,7 +288,7 @@ public class SolicitudTrasladoService {
             }
 
             // Recalcular tiempo real sumando duración de tramos (cuando existan fechas)
-            for (Tramos t : ruta.getTramos()) {
+            for (Tramos t : tramosActualizados) {
                 java.sql.Date inicio = t.getFechaInicio();
                 java.sql.Date fin = t.getFechaFin();
                 if (inicio != null && fin != null) {
@@ -293,7 +311,18 @@ public class SolicitudTrasladoService {
 
         // Actualizar la solicitud
         if (costoFinal != null) solicitud.setCostoFinal(costoFinal);
-        if (Double.valueOf(tiempoRealHoras) != null && tiempoRealHoras > 0) solicitud.setTiempoReal(tiempoRealHoras);
+        // siempre guardamos tiempoReal (aunque sea 0) para no dejarlo null
+        solicitud.setTiempoReal(tiempoRealHoras);
+        // Marcar contenedor como entregado
+        if (solicitud.getContenedor() != null && solicitud.getContenedor().getId() != null) {
+            try {
+                contenedorService.actualizarEstadoContenedor(solicitud.getContenedor().getId(), EstadoContenedor.ENTREGADO);
+                solicitud.setContenedor(contenedorService.obtenerContenedorPorId(solicitud.getContenedor().getId()));
+            } catch (Exception ex) {
+                log.warn("No se pudo actualizar estado del contenedor a ENTREGADO: {}", ex.getMessage());
+            }
+        }
+
         solicitud.setEstado(EstadoSolicitud.COMPLETADA);
         solicitudTrasladoRepo.save(solicitud);
         return solicitud;

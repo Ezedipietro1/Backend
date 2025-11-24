@@ -39,6 +39,7 @@ public class CiudadController {
     }
 
     @GetMapping("/search")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<CiudadDTO> buscarPorNombre(@RequestParam("nombre") String nombre) {
         return ResponseEntity.ok(ciudadService.obtenerCiudadPorNombre(nombre));
     }

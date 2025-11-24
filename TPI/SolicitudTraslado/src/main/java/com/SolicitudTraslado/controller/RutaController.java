@@ -30,6 +30,7 @@ public class RutaController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<RutaDTO> obtenerRutaPorId(@PathVariable Long id) {
         RutaDTO ruta = rutaService.obtenerRutaDtoPorId(id);
         if (ruta != null) {
@@ -40,6 +41,7 @@ public class RutaController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<RutaDTO> actualizarRuta(@PathVariable Long id, @RequestBody RutaDTO ruta) {
         ruta.setId(id);
         RutaDTO actualizado = rutaService.actualizarRutaDesdeDto(ruta);
@@ -47,16 +49,19 @@ public class RutaController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<Map<Long, RutaDTO>> listarRutas() {
         Map<Long, RutaDTO> rutas = rutaService.listarRutasDto();
         return ResponseEntity.ok(rutas);
     }
 
     @GetMapping("/para_asignar")
+    @PreAuthorize("hasRole('OPERADOR')")
     public ResponseEntity<Map<Long, RutaDTO>> obtenerRutasParaAsignarASolicitud(@RequestParam Long solicitudId) {
-        // Aquí se asume que existe un método para obtener la solicitud por ID
-        SolicitudTraslado solicitud = solicitudTrasladoService.obtenerSolicitudPorNumero(solicitudId);
-        if (solicitud == null) {
+        SolicitudTraslado solicitud;
+        try {
+            solicitud = solicitudTrasladoService.obtenerSolicitudPorNumero(solicitudId);
+        } catch (IllegalArgumentException ex) {
             return ResponseEntity.notFound().build();
         }
         List<RutaDTO> rutas = rutaService.obtenerRutasParaAsignarDto(solicitud);
